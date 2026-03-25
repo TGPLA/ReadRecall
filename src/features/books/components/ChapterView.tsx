@@ -9,8 +9,8 @@ import { ChapterDetail } from './ChapterDetail';
 
 interface ChapterViewProps {
   bookId: string;
-  onStartConceptLearning: (paragraph: Paragraph) => void;
-  onStartIntentionLearning: (paragraph: Paragraph) => void;
+  onStartConceptLearning: (source: { chapterId?: string; paragraphId?: string; content: string }, chapter: Chapter) => void;
+  onStartIntentionLearning: (source: { chapterId?: string; paragraphId?: string; content: string }, chapter: Chapter) => void;
 }
 
 export function ChapterView({ bookId, onStartConceptLearning, onStartIntentionLearning }: ChapterViewProps) {
@@ -34,8 +34,8 @@ export function ChapterView({ bookId, onStartConceptLearning, onStartIntentionLe
       <ChapterDetail
         chapter={selectedChapter}
         onBack={() => { setSelectedChapter(null); loadChapters(); }}
-        onStartConceptLearning={onStartConceptLearning}
-        onStartIntentionLearning={onStartIntentionLearning}
+        onStartConceptLearning={(source) => onStartConceptLearning(source, selectedChapter)}
+        onStartIntentionLearning={(source) => onStartIntentionLearning(source, selectedChapter)}
       />
     );
   }

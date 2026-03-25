@@ -78,8 +78,8 @@ function ShuJiXinXi({ book, darkMode }: { book: Book; darkMode: boolean }) {
 function ZhangJieGuanLi({ bookId, onStartPractice, onStartConceptLearning, onStartIntentionLearning, practiceLoading, darkMode }: {
   bookId: string;
   onStartPractice: (paragraph: Paragraph) => void;
-  onStartConceptLearning: (paragraph: Paragraph) => void;
-  onStartIntentionLearning: (paragraph: Paragraph) => void;
+  onStartConceptLearning: (source: { chapterId?: string; paragraphId?: string; content: string }, chapter: import('@infrastructure/types').Chapter) => void;
+  onStartIntentionLearning: (source: { chapterId?: string; paragraphId?: string; content: string }, chapter: import('@infrastructure/types').Chapter) => void;
   practiceLoading: boolean;
   darkMode: boolean;
 }) {

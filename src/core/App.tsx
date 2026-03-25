@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { AppProvider, useApp } from '@infrastructure/hooks';
 import { BookShelf } from '@features/books/components/BookShelf';
 import { BookDetail } from '@features/books/components/BookDetail';
+import { ChapterDetail } from '@features/books/components/ChapterDetail';
 import { DaTiZhu } from '@features/practice/DaTiZhu';
 import { GaiNianXueXi } from '@features/practice/GaiNianXueXi';
 import { YiTuLiJie } from '@features/practice/YiTuLiJie';
@@ -15,9 +16,9 @@ import { authService } from '@shared/services/auth';
 import { ToastContainer } from '@shared/utils/common/ToastTiShi';
 import { QuanPingJiaZai } from '@shared/utils/common/JiaZaiZhuangTai';
 import { CuoWuBianJie } from '@shared/utils/common/CuoWuBianJie';
-import type { Book, Paragraph, Question } from '@infrastructure/types';
+import type { Book, Paragraph, Question, Chapter } from '@infrastructure/types';
 
-type Page = 'shelf' | 'detail' | 'practice' | 'answer' | 'settings' | 'prompts' | 'concept-learning' | 'intention-learning';
+type Page = 'shelf' | 'detail' | 'chapter-detail' | 'practice' | 'answer' | 'settings' | 'prompts' | 'concept-learning' | 'intention-learning';
 
 interface LearningSource {
   chapterId?: string;
@@ -29,6 +30,7 @@ function AppContent() {
   const { settings } = useApp();
   const [currentPage, setCurrentPage] = useState<Page>('shelf');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [selectedParagraph, setSelectedParagraph] = useState<Paragraph | null>(null);
   const [learningSource, setLearningSource] = useState<LearningSource | null>(null);
   const [practiceQuestions, setPracticeQuestions] = useState<Question[]>([]);
@@ -65,25 +67,39 @@ function AppContent() {
     setPracticeQuestions([]);
   };
 
-  const handleStartConceptLearning = (source: LearningSource) => {
+  const handleStartConceptLearning = (source: LearningSource, chapter?: Chapter) => {
     setLearningSource(source);
+    if (chapter) {
+      setSelectedChapter(chapter);
+    }
     setCurrentPage('concept-learning');
   };
 
-  const handleStartIntentionLearning = (source: LearningSource) => {
+  const handleStartIntentionLearning = (source: LearningSource, chapter?: Chapter) => {
     setLearningSource(source);
+    if (chapter) {
+      setSelectedChapter(chapter);
+    }
     setCurrentPage('intention-learning');
   };
 
   const handleBackToDetail = () => {
-    setCurrentPage('detail');
+    if (selectedChapter) {
+      setCurrentPage('chapter-detail');
+    } else {
+      setCurrentPage('detail');
+    }
     setSelectedParagraph(null);
     setLearningSource(null);
     setPracticeQuestions([]);
   };
 
   const handleComplete = () => {
-    setCurrentPage('detail');
+    if (selectedChapter) {
+      setCurrentPage('chapter-detail');
+    } else {
+      setCurrentPage('detail');
+    }
     setSelectedParagraph(null);
     setLearningSource(null);
     setPracticeQuestions([]);
@@ -108,6 +124,14 @@ function AppContent() {
           onBack={handleBackToShelf}
           onStartConceptLearning={handleStartConceptLearning}
           onStartIntentionLearning={handleStartIntentionLearning}
+        />
+      )}
+      {currentPage === 'chapter-detail' && selectedChapter && (
+        <ChapterDetail
+          chapter={selectedChapter}
+          onBack={() => { setSelectedChapter(null); setCurrentPage('detail'); }}
+          onStartConceptLearning={(source) => handleStartConceptLearning(source, selectedChapter)}
+          onStartIntentionLearning={(source) => handleStartIntentionLearning(source, selectedChapter)}
         />
       )}
       {currentPage === 'answer' && selectedParagraph && practiceQuestions.length > 0 && (

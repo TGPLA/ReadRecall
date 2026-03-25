@@ -125,13 +125,40 @@ export function ChapterManager({ bookId, chapters, onChaptersChange, onSelectCha
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>章节标题</label>
-                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', fontSize: '0.875rem' }} placeholder="例如：第一章 原子习惯的微小力量" />
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    boxSizing: 'border-box',
+                  }}
+                  placeholder="例如：第一章 原子习惯的微小力量"
+                />
               </div>
               
               {showAddModal && (
                 <div>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>章节内容</label>
-                  <textarea value={content} onChange={(e) => setContent(e.target.value)} style={{ width: '100%', minHeight: '12rem', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', fontSize: '0.875rem', resize: 'vertical' }} placeholder="粘贴章节文本内容，AI 将基于此内容生成题目..." />
+                  <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    style={{
+                      width: '100%',
+                      minHeight: '12rem',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.875rem',
+                      resize: 'vertical',
+                      boxSizing: 'border-box',
+                    }}
+                    placeholder="粘贴章节文本内容，AI 将基于此内容生成题目..."
+                  />
                 </div>
               )}
               

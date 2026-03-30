@@ -70,6 +70,10 @@ class AuthService {
 
   async signIn(username: string, password: string): Promise<{ user: AuthUser | null; error: AuthError | null }> {
     try {
+      // @关键代码-不要随意删除 [登录前清理旧状态]
+      // 原因：避免旧 token 干扰新登录请求，防止认证冲突
+      this.signOut();
+      
       if (password.length < 6) {
         return { 
           user: null, 
@@ -84,9 +88,13 @@ class AuthService {
         };
       }
 
+      const headers = new Headers();
+      headers.set('Content-Type', 'application/json');
+      headers.delete('Authorization');
+
       const response = await fetch(`${API_BASE}/auth/signin`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify({ username, password }),
       });
 
@@ -122,6 +130,8 @@ class AuthService {
 
   async signUp(username: string, password: string, nickname?: string): Promise<{ user: AuthUser | null; error: AuthError | null }> {
     try {
+      this.signOut();
+      
       if (password.length < 6) {
         return { 
           user: null, 
@@ -136,9 +146,13 @@ class AuthService {
         };
       }
 
+      const headers = new Headers();
+      headers.set('Content-Type', 'application/json');
+      headers.delete('Authorization');
+
       const response = await fetch(`${API_BASE}/auth/signup`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify({ username, password, nickname }),
       });
 

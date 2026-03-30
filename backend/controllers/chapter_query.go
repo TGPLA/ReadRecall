@@ -17,15 +17,8 @@ func GetChaptersByBook(c *gin.Context) {
 	bookId := c.Param("book_id")
 	db := config.GetDB()
 
-	var book models.Book
-	result := db.Where("id = ? AND user_id = ?", bookId, userId).First(&book)
-	if result.Error == gorm.ErrRecordNotFound {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "书籍不存在"})
-		return
-	}
-
 	var chapters []models.Chapter
-	db.Where("book_id = ?", bookId).Order("order_index ASC").Find(&chapters)
+	db.Where("book_id = ? AND user_id = ?", bookId, userId).Order("order_index ASC").Find(&chapters)
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": chapters})
 }

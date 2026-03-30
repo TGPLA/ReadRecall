@@ -4,6 +4,7 @@
 import { useRef } from 'react';
 import type { Chapter, Paragraph } from '@infrastructure/types';
 import { DuanLuoLieBiao } from './DuanLuoLieBiao';
+import { DuanLuoXuanRan } from '@shared/utils/common/DuanLuoXuanRan';
 
 interface LearningSource {
   chapterId?: string;
@@ -49,14 +50,12 @@ export function ZhangJieXiangQingZhuShiTu({ chapter, paragraphs, onViewParagraph
           style={{
             fontSize: '0.9375rem',
             color: '#374151',
-            lineHeight: 1.8,
-            whiteSpace: 'pre-wrap',
             maxHeight: '32rem',
             overflowY: 'auto',
             userSelect: 'text',
           }}
         >
-          {chapter.content || '暂无章节内容'}
+          <DuanLuoXuanRan content={chapter.content || ''} />
         </div>
         <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.75rem', textAlign: 'center' }}>
           💡 选中文字可创建段落，用于学习

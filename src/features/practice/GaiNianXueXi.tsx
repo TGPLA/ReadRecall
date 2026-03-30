@@ -48,9 +48,23 @@ export function GaiNianXueXi({ chapterId, paragraphId, content, onComplete, onBa
         setLoading(false);
         return;
       }
-      setConcepts(data.concepts);
+      
+      const seenConcepts = new Set<string>();
+      const uniqueConcepts = data.concepts.filter((concept) => {
+        if (seenConcepts.has(concept.concept)) {
+          return false;
+        }
+        seenConcepts.add(concept.concept);
+        return true;
+      });
+      
+      if (uniqueConcepts.length !== data.concepts.length) {
+        console.log(`⚠️ 发现重复概念，已去重。原数量: ${data.concepts.length}, 去重后数量: ${uniqueConcepts.length}`);
+      }
+      
+      setConcepts(uniqueConcepts);
       const initialStates: Record<number, ConceptState> = {};
-      data.concepts.forEach((_, index) => {
+      uniqueConcepts.forEach((_, index) => {
         initialStates[index] = { userAnswer: '', evaluation: null, completed: false };
       });
       setConceptStates(initialStates);

@@ -47,14 +47,28 @@ func GetZhipuAPIKey(userKey string) string {
 
 func LoadConfig() {
 	exePath, _ := os.Executable()
-	envPath := filepath.Join(filepath.Dir(exePath), "backend", ".env")
-	if _, err := os.Stat(envPath); os.IsNotExist(err) {
-		envPath = "backend/.env"
+	exeDir := filepath.Dir(exePath)
+	
+	possiblePaths := []string{
+		filepath.Join(exeDir, ".env"),
+		filepath.Join(exeDir, "backend", ".env"),
+		"backend/.env",
+		".env",
 	}
 	
-	if err := godotenv.Load(envPath); err != nil {
-		log.Printf("⚠️  加载环境变量文件失败: %v，尝试从当前目录加载", err)
-		godotenv.Load()
+	var loadedPath string
+	for _, path := range possiblePaths {
+		if _, err := os.Stat(path); err == nil {
+			if err := godotenv.Load(path); err == nil {
+				loadedPath = path
+				log.Printf("✅ 成功加载配置文件: %s", loadedPath)
+				break
+			}
+		}
+	}
+	
+	if loadedPath == "" {
+		log.Println("⚠️  未找到 .env 文件，使用默认配置")
 	}
 
 	AppConfig = Config{
@@ -68,7 +82,17 @@ func LoadConfig() {
 		ZhipuAPIKey: getEnv("ZHIPU_API_KEY", ""),
 		ZhipuModel:  getEnv("ZHIPU_MODEL", "glm-4-flash"),
 	}
-	log.Printf("✅ 配置加载完成，ZhipuAPIKey=%s", AppConfig.ZhipuAPIKey)
+	log.Printf("✅ 配置加载完成，DB=%s:%s/%s", AppConfig.DBHost, AppConfig.DBPort, AppConfig.DBName)
+}
+
+func ValidateStartup() error {
+	if AppConfig.DBPassword == "" {
+		log.Println("⚠️  数据库密码为空，请检查 .env 配置")
+	}
+	if AppConfig.JWTSecret == "your-jwt-secret-key" {
+		log.Println("⚠️  使用默认 JWT 密钥，建议在生产环境中修改")
+	}
+	return nil
 }
 
 func getEnv(key, defaultValue string) string {
@@ -95,7 +119,26 @@ func InitDB() {
 	}
 	log.Println("✅ 数据库连接成功")
 
-	AutoMigrate()
+	log.Println("🔍 检查并执行数据库迁移 v5.0...")
+	migrateV5()
+
+	log.Println("⏭️  跳过自动迁移（表结构已存在）")
+}
+
+func migrateV5() {
+	var columnExists bool
+	DB.Raw("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = ? AND table_name = 'books' AND column_name = 'epub_file_path'", AppConfig.DBName).Scan(&columnExists)
+	
+	if !columnExists {
+		log.Println("📝 添加 epub_file_path 字段到 books 表...")
+		if err := DB.Exec("ALTER TABLE books ADD COLUMN epub_file_path VARCHAR(512) DEFAULT NULL COMMENT 'EPUB 文件存储路径'").Error; err != nil {
+			log.Printf("⚠️  添加字段失败（可能已存在）: %v", err)
+		} else {
+			log.Println("✅ 成功添加 epub_file_path 字段")
+		}
+	} else {
+		log.Println("✅ epub_file_path 字段已存在，跳过迁移")
+	}
 }
 
 func AutoMigrate() {
@@ -110,6 +153,8 @@ func AutoMigrate() {
 		&models.PracticeRecord{},
 		&models.PromptTemplate{},
 		&models.Paragraph{},
+		&models.Concept{},
+		&models.ConceptPracticeRecord{},
 	); err != nil {
 		log.Fatal("❌ 数据库迁移失败:", err)
 	}

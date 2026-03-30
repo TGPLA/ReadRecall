@@ -12,7 +12,9 @@ import { YiTuLiJie } from '@features/practice/YiTuLiJie';
 import { SettingsPage } from '@features/user/components/SettingsPage';
 import { TiShiCiGuanLi } from '@features/user/components/TiShiCiGuanLi';
 import { AuthPage } from '@features/user/components/AuthPage';
+import { BackendUnavailable } from '@features/user/components/BackendUnavailable';
 import { authService } from '@shared/services/auth';
+import { checkBackendHealth } from '@shared/services/healthCheck';
 import { ToastContainer } from '@shared/utils/common/ToastTiShi';
 import { QuanPingJiaZai } from '@shared/utils/common/JiaZaiZhuangTai';
 import { CuoWuBianJie } from '@shared/utils/common/CuoWuBianJie';
@@ -36,13 +38,32 @@ function AppContent() {
   const [practiceQuestions, setPracticeQuestions] = useState<Question[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isBackendAvailable, setIsBackendAvailable] = useState(true);
+  const [checkingBackend, setCheckingBackend] = useState(true);
 
   useEffect(() => {
+    const checkBackend = async (showLoading: boolean = false) => {
+      if (showLoading) {
+        setCheckingBackend(true);
+      }
+      const status = await checkBackendHealth();
+      setIsBackendAvailable(status.isBackendAvailable);
+      if (showLoading) {
+        setCheckingBackend(false);
+      }
+    };
+    
+    checkBackend(true);
+    const interval = setInterval(() => checkBackend(false), 30000);
+    
     const unsubscribe = authService.onAuthChange((user) => {
       setIsAuthenticated(!!user);
       setIsLoading(false);
     });
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
@@ -105,8 +126,12 @@ function AppContent() {
     setPracticeQuestions([]);
   };
 
-  if (isLoading) {
+  if (isLoading || checkingBackend) {
     return <QuanPingJiaZai wenAn="加载应用..." />;
+  }
+
+  if (!isBackendAvailable) {
+    return <BackendUnavailable darkMode={settings.darkMode} />;
   }
 
   if (!isAuthenticated) {
@@ -139,7 +164,7 @@ function AppContent() {
       )}
       {currentPage === 'concept-learning' && learningSource && (
         <GaiNianXueXi 
-          key={learningSource.chapterId ? `chapter-${learningSource.chapterId}-${Date.now()}` : `paragraph-${learningSource.paragraphId}-${Date.now()}`}
+          key={learningSource.chapterId ? `chapter-${learningSource.chapterId}` : `paragraph-${learningSource.paragraphId}`}
           chapterId={learningSource.chapterId}
           paragraphId={learningSource.paragraphId}
           content={learningSource.content}

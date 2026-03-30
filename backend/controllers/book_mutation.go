@@ -3,6 +3,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"reading-reflection/config"
 	"reading-reflection/middleware"
@@ -13,13 +14,18 @@ import (
 )
 
 func CreateBook(c *gin.Context) {
+	log.Println("📚 开始创建书籍")
+	
 	userId := middleware.GetUserId(c)
+	log.Printf("👤 用户ID: %s", userId)
 
 	var req CreateBookRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("❌ 请求参数绑定失败: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "请求参数错误：" + err.Error()})
 		return
 	}
+	log.Printf("📋 请求参数: Title=%s, Author=%s, CoverUrl=%s", req.Title, req.Author, req.CoverUrl)
 
 	db := config.GetDB()
 	newBook := models.Book{
@@ -30,9 +36,11 @@ func CreateBook(c *gin.Context) {
 	}
 
 	if err := db.Create(&newBook).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "创建书籍失败"})
+		log.Printf("❌ 创建书籍失败: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "创建书籍失败: " + err.Error()})
 		return
 	}
+	log.Printf("✅ 书籍创建成功: ID=%s, Title=%s", newBook.ID, newBook.Title)
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": newBook})
 }

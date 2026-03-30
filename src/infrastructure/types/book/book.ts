@@ -4,6 +4,7 @@ export interface Book {
   title: string;
   author: string;
   coverUrl?: string;
+  epubFilePath?: string;
   chapterCount: number;
   questionCount: number;
   summary?: string;

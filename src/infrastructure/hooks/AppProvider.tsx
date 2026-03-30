@@ -76,6 +76,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         }
         setQuestions(allQuestions);
+      } else {
+        console.warn('从数据库加载书籍失败:', booksError.message);
+        console.log('保持当前书籍列表（空）');
       }
 
       const { settings: dbSettings, error: settingsError } = await databaseService.getUserSettings();

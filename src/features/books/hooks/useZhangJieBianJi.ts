@@ -4,6 +4,7 @@
 import { useState, useCallback } from 'react';
 import type { Chapter } from '@infrastructure/types';
 import { chapterService } from '@shared/services/chapterService';
+import { aiService } from '@shared/services/aiService';
 import { showError, showSuccess } from '@shared/utils/common/ToastTiShi';
 
 export function useZhangJieBianJi() {
@@ -45,6 +46,14 @@ export function useZhangJieBianJi() {
       showSuccess('章节更新成功');
       closeModal();
       onChapterUpdated();
+
+      const { data, error: aiError } = await aiService.generateQuestions(editingChapter.id, '标准题', 5);
+      if (aiError) {
+        console.error('AI 生成题目失败:', aiError);
+        showError('章节已更新，但 AI 生成题目失败：' + aiError);
+      } else {
+        showSuccess(`AI 已基于新内容生成 ${data?.questions.length || 0} 道题目`);
+      }
     } finally {
       setLoading(false);
     }

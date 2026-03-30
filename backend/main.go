@@ -8,6 +8,7 @@ import (
 
 func main() {
 	config.LoadConfig()
+	config.ValidateStartup()
 	config.InitDB()
 	router := routes.InitRoutes()
 	log.Println("🚀 服务器启动成功，监听端口: " + config.AppConfig.ServerPort)

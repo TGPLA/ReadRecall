@@ -23,7 +23,7 @@ type Chapter struct {
 	UpdatedAt      time.Time   `gorm:"autoUpdateTime" json:"updated_at"`
 	Paragraphs     []Paragraph `gorm:"foreignKey:ChapterId;constraint:OnDelete:CASCADE" json:"paragraphs,omitempty"`
 	Questions      []Question  `gorm:"foreignKey:ChapterId;constraint:OnDelete:CASCADE" json:"questions,omitempty"`
-	Concepts       []Concept   `gorm:"foreignKey:SourceId;constraint:OnDelete:CASCADE" json:"concepts,omitempty"`
+	Concepts       []Concept   `gorm:"foreignKey:SourceId" json:"concepts,omitempty"`
 	Book           *Book       `gorm:"foreignKey:BookId" json:"book,omitempty"`
 }
 

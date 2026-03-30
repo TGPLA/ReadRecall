@@ -20,6 +20,8 @@ func InitRoutes() *gin.Engine {
 		MaxAge:           12 * 3600,
 	}))
 
+	router.Static("/uploads", "./uploads")
+
 	api := router.Group("/api")
 	{
 		auth := api.Group("/auth")
@@ -39,6 +41,8 @@ func InitRoutes() *gin.Engine {
 			books.PUT("/:id", controllers.UpdateBook)
 			books.DELETE("/:id", controllers.DeleteBook)
 			books.GET("/:id", controllers.GetBookDetail)
+			books.POST("/:id/upload-epub", controllers.UploadEPUB)
+			books.GET("/:id/epub", controllers.DownloadEPUB)
 		}
 
 		chapters := api.Group("/chapters")
@@ -72,6 +76,7 @@ func InitRoutes() *gin.Engine {
 			prompts.GET("/:id", controllers.GetPromptTemplateDetail)
 			prompts.PUT("/:id", controllers.UpdatePromptTemplate)
 			prompts.DELETE("/:id", controllers.DeletePromptTemplate)
+			prompts.POST("/init-system", controllers.InitSystemPrompts) // 临时接口：初始化系统模板
 		}
 
 		questions := api.Group("/questions")
@@ -120,6 +125,13 @@ func InitRoutes() *gin.Engine {
 	}
 
 	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status":  "ok",
+			"message": "阅读回响后端服务运行正常",
+		})
+	})
+	
+	api.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":  "ok",
 			"message": "阅读回响后端服务运行正常",

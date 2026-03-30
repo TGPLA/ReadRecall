@@ -76,18 +76,29 @@ func AIExtractConcepts(c *gin.Context) {
 		println("📊 查询结果 - 错误:", result.Error, "数量:", len(existingConcepts))
 		if result.Error == nil && len(existingConcepts) > 0 {
 			println("✅ 从数据库返回概念，数量:", len(existingConcepts))
-			var concepts []map[string]string
+			
+			seenConcepts := make(map[string]bool)
+			var uniqueConcepts []map[string]string
+			
 			for _, concept := range existingConcepts {
-				concepts = append(concepts, map[string]string{
-					"id":         concept.ID,
-					"concept":    concept.Concept,
-					"explanation": concept.Explanation,
-				})
+				if !seenConcepts[concept.Concept] {
+					seenConcepts[concept.Concept] = true
+					uniqueConcepts = append(uniqueConcepts, map[string]string{
+						"id":         concept.ID,
+						"concept":    concept.Concept,
+						"explanation": concept.Explanation,
+					})
+				}
 			}
+			
+			if len(uniqueConcepts) != len(existingConcepts) {
+				println("⚠️ 发现重复概念，已去重。原数量:", len(existingConcepts), "去重后数量:", len(uniqueConcepts))
+			}
+			
 			c.JSON(http.StatusOK, gin.H{
 				"success": true,
 				"data": gin.H{
-					"concepts": concepts,
+					"concepts": uniqueConcepts,
 				},
 			})
 			return
@@ -126,7 +137,30 @@ func AIExtractConcepts(c *gin.Context) {
 		var conceptsWithID []ConceptWithID
 
 		tx := db.Begin()
+		seenConcepts := make(map[string]bool)
 		for _, conceptData := range result.Concepts {
+			if seenConcepts[conceptData.Concept] {
+				println("⚠️ 概念已在本次处理中出现，跳过:", conceptData.Concept)
+				continue
+			}
+			
+			var existingConcept models.Concept
+			checkResult := tx.Where("user_id = ? AND source_type = ? AND source_id = ? AND concept = ?",
+				userId, sourceType, sourceId, conceptData.Concept).First(&existingConcept)
+			
+			if checkResult.Error == nil {
+				println("⚠️ 概念已在数据库中存在，跳过:", conceptData.Concept)
+				seenConcepts[conceptData.Concept] = true
+				conceptsWithID = append(conceptsWithID, ConceptWithID{
+					ID:         existingConcept.ID,
+					Concept:    existingConcept.Concept,
+					Explanation: existingConcept.Explanation,
+				})
+				continue
+			}
+			
+			seenConcepts[conceptData.Concept] = true
+
 			concept := models.Concept{
 				UserId:     userId,
 				SourceType: sourceType,
@@ -199,25 +233,29 @@ func GetConcepts(c *gin.Context) {
 		LastPractice *map[string]interface{} `json:"last_practice,omitempty"`
 	}
 
+	seenConcepts := make(map[string]bool)
 	var conceptsWithPractice []ConceptWithPractice
 	for _, concept := range concepts {
-		hasPractice := len(concept.PracticeRecords) > 0
-		var lastPractice *map[string]interface{}
-		if hasPractice {
-			record := concept.PracticeRecords[0]
-			lastPractice = &map[string]interface{}{
-				"user_answer":   record.UserAnswer,
-				"ai_evaluation": record.AIEvaluation,
-				"practiced_at":  record.PracticedAt,
+		if !seenConcepts[concept.Concept] {
+			seenConcepts[concept.Concept] = true
+			hasPractice := len(concept.PracticeRecords) > 0
+			var lastPractice *map[string]interface{}
+			if hasPractice {
+				record := concept.PracticeRecords[0]
+				lastPractice = &map[string]interface{}{
+					"user_answer":   record.UserAnswer,
+					"ai_evaluation": record.AIEvaluation,
+					"practiced_at":  record.PracticedAt,
+				}
 			}
+			conceptsWithPractice = append(conceptsWithPractice, ConceptWithPractice{
+				ID:           concept.ID,
+				Concept:      concept.Concept,
+				Explanation:  concept.Explanation,
+				HasPractice:  hasPractice,
+				LastPractice: lastPractice,
+			})
 		}
-		conceptsWithPractice = append(conceptsWithPractice, ConceptWithPractice{
-			ID:           concept.ID,
-			Concept:      concept.Concept,
-			Explanation:  concept.Explanation,
-			HasPractice:  hasPractice,
-			LastPractice: lastPractice,
-		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{

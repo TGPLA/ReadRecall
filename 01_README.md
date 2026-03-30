@@ -12,11 +12,11 @@
 - 📖 **EPUB 导入**：导入 EPUB 电子书，自动解析书名、作者、章节，支持选择性导入
 - 📖 **章节管理**：书籍章节的增删改查，支持排序
 - 📃 **段落管理**：划词创建段落，选中章节内容即可创建段落；支持查看详情、编辑、删除段落
-- 📝 **提示词模板**：系统预设模板 + 用户自定义模板，支持三种题型
-- 🤖 **AI 出题**：基于章节或段落内容自动生成名词解释、意图理解、生活应用三类题目
+- 📝 **提示词模板管理**：系统预设模板（全局共享）+ 用户自定义模板，支持名词解释、意图理解、生活应用三种题型
+- 🤖 **AI 出题**：基于章节或段落内容，使用提示词模板自动生成三类题目
 - 🎯 **名词解释学习**：AI 提取重要概念→用户学习专业解释→用自己的话复述→AI 点评表达清晰度（循环）
 - 🎯 **意图理解学习**：用户阅读段落→用自己的话讲述作者意图→AI 评价对/错/不到位
-- 🎯 **练习模式**：显示段落+问题+作答，AI 评价答案
+- 🎯 **练习模式**：显示段落 + 问题 + 作答，AI 评价答案
 - 📊 **学习统计**：追踪掌握进度，记录练习次数
 - 📝 **练习记录**：保存用户答题历史和 AI 评价
 - 🌙 **深色模式**：支持浅色/深色主题切换
@@ -31,7 +31,7 @@
 | 样式方案 | 内联样式 |
 | AI 服务 | 智谱 AI (GLM-4) |
 | 后端 | Go (Gin 框架) |
-| 数据库 | MySQL 8.0 |
+| 数据库 | MySQL 8.0（远程服务器，SSH 隧道连接） |
 | 测试框架 | Vitest（单元/集成）+ Playwright（E2E） |
 | 反向代理 | Nginx (OpenResty) |
 
@@ -223,9 +223,9 @@ src/
 | `books` | 书籍 | id, user_id, title, author, cover_url, question_count, mastered_count |
 | `chapters` | 章节 | id, user_id, book_id, title, content, order_index, paragraph_count |
 | `paragraphs` | 段落 | id, user_id, chapter_id, content, order_index, question_count |
-| `prompt_templates` | 提示词模板 | id, user_id, name, question_type, content, is_default, is_system |
+| `prompt_templates` | 提示词模板 | id, user_id（NULL=系统模板）, name, question_type, content, is_default, is_system |
 | `questions` | 题目 | id, user_id, book_id, chapter_id, paragraph_id, question, answer, question_type, category, options, correct_index, explanation, difficulty, mastery_level |
-| `users` | 用户 | id, email, password_hash, created_at |
+| `users` | 用户 | id, username, password_hash, created_at |
 | `user_settings` | 用户设置 | user_id, dark_mode, zhipu_api_key, zhipu_model |
 | `practice_records` | 练习记录 | id, user_id, question_id, practiced_at, result |
 
@@ -254,6 +254,8 @@ src/
 
 - Node.js >= 18
 - npm >= 9
+- Go >= 1.21（后端开发）
+- MySQL 8.0（数据库）
 
 ### 安装依赖
 
@@ -262,6 +264,8 @@ npm install
 ```
 
 ### 配置环境变量
+
+#### 前端配置
 
 复制环境变量示例文件：
 
@@ -279,11 +283,76 @@ VITE_API_BASE_URL=http://localhost:8080/api
 VITE_ZHIPU_API_KEY=your_zhipu_api_key
 ```
 
-### 启动开发服务器
+#### 后端配置
+
+复制后端环境变量示例文件：
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+编辑 `backend/.env` 文件，填入数据库和服务配置：
+
+```env
+# 服务配置
+SERVER_PORT=8080
+
+# 数据库配置（本地开发使用 SSH 隧道）
+DB_HOST=127.0.0.1
+DB_PORT=3307
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=reading_reflection
+
+# JWT 配置
+JWT_SECRET=your-jwt-secret-key
+
+# 智谱 AI 配置
+ZHIPU_API_KEY=your_zhipu_api_key
+ZHIPU_MODEL=glm-4-flash
+```
+
+### 启动后端服务
+
+#### 1. 建立 SSH 隧道（本地开发连接远程数据库）
+
+```bash
+ssh -f -N -L 3307:127.0.0.1:3306 root@linyubo.top
+```
+
+#### 2. 启动后端
+
+**推荐方式（使用编译好的可执行文件）：**
+```bash
+cd backend
+.\readrecall-backend.exe
+```
+
+**开发方式（使用 go run）：**
+```bash
+cd backend
+go run main.go
+```
+
+后端服务将在 http://localhost:8080 启动
+
+**配置加载说明：**
+后端会按以下优先级查找 `.env` 配置文件：
+1. `{可执行文件目录}/.env`
+2. `{可执行文件目录}/backend/.env`
+3. `backend/.env`
+4. `.env`
+
+启动时会显示加载的配置文件路径和数据库连接信息。
+
+### 启动前端开发服务器
 
 ```bash
 npm run dev
 ```
+
+前端开发服务器将在 http://localhost:5173 启动
 
 ### 构建生产版本
 

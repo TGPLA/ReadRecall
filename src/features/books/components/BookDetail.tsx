@@ -1,12 +1,14 @@
 // @审计已完成
 // 书籍详情组件 - 显示书籍信息和章节管理
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@infrastructure/hooks';
-import type { Book, Question, Paragraph } from '@infrastructure/types';
+import type { Book, Question, Paragraph, Chapter } from '@infrastructure/types';
 import { getResponsiveValue } from '@shared/utils/responsive';
 import { ChapterView } from './ChapterView';
-import { questionService } from '@shared/services/questionService';
+import { EPUBReaderModal } from './EPUBReaderModal';
+import { databaseService } from '@shared/services/database';
+import { chapterService } from '@shared/services/chapterService';
 
 interface BookDetailProps {
   book: Book;
@@ -17,10 +19,31 @@ interface BookDetailProps {
 
 export function BookDetail({ book, onBack, onStartConceptLearning, onStartIntentionLearning }: BookDetailProps) {
   const { settings } = useApp();
+  const [readerOpen, setReaderOpen] = useState(false);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [loadingChapters, setLoadingChapters] = useState(true);
+
+  const epubUrl = book.epubFilePath ? databaseService.getEPUBUrl(book.id, book.epubFilePath) : '';
+  const defaultChapterId = chapters.length > 0 ? chapters[0].id : '';
+
+  const loadChapters = useCallback(async () => {
+    setLoadingChapters(true);
+    const { chapters: loadedChapters } = await chapterService.getChaptersByBook(book.id);
+    setChapters(loadedChapters);
+    setLoadingChapters(false);
+  }, [book.id]);
+
+  useEffect(() => {
+    loadChapters();
+  }, [loadChapters]);
+
+  const handleParagraphCreated = useCallback(() => {
+    loadChapters();
+  }, [loadChapters]);
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: settings.darkMode ? '#111827' : '#f9fafb' }}>
-      <TouBuDaoHang book={book} onBack={onBack} darkMode={settings.darkMode} />
+      <TouBuDaoHang book={book} onBack={onBack} onOpenReader={() => setReaderOpen(true)} darkMode={settings.darkMode} />
       <ShuJiXinXi book={book} darkMode={settings.darkMode} />
 
       <div style={{ maxWidth: '72rem', margin: '0 auto', padding: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }) }}>
@@ -31,20 +54,37 @@ export function BookDetail({ book, onBack, onStartConceptLearning, onStartIntent
           darkMode={settings.darkMode}
         />
       </div>
+
+      <EPUBReaderModal
+        isOpen={readerOpen}
+        url={epubUrl}
+        darkMode={settings.darkMode}
+        bookId={book.id}
+        chapterId={defaultChapterId}
+        onClose={() => setReaderOpen(false)}
+        onParagraphCreated={handleParagraphCreated}
+      />
     </div>
   );
 }
 
-function TouBuDaoHang({ book, onBack, darkMode }: { book: Book; onBack: () => void; darkMode: boolean }) {
+function TouBuDaoHang({ book, onBack, onOpenReader, darkMode }: { book: Book; onBack: () => void; onOpenReader: () => void; darkMode: boolean }) {
   return (
     <div style={{ backgroundColor: darkMode ? '#1f2937' : '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
       <div style={{ maxWidth: '72rem', margin: '0 auto', padding: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }) }}>
-        <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: darkMode ? '#9ca3af' : '#6b7280', border: 'none', background: 'none', cursor: 'pointer' }}>
-          <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          返回书架
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: darkMode ? '#9ca3af' : '#6b7280', border: 'none', background: 'none', cursor: 'pointer' }}>
+            <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            返回书架
+          </button>
+          {book.epubFilePath && (
+            <button onClick={onOpenReader} style={{ padding: '0.5rem 1rem', border: 'none', borderRadius: '0.5rem', backgroundColor: '#3b82f6', color: '#ffffff', cursor: 'pointer' }}>
+              阅读 EPUB
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -75,19 +115,16 @@ function ShuJiXinXi({ book, darkMode }: { book: Book; darkMode: boolean }) {
   );
 }
 
-function ZhangJieGuanLi({ bookId, onStartPractice, onStartConceptLearning, onStartIntentionLearning, practiceLoading, darkMode }: {
+function ZhangJieGuanLi({ bookId, onStartConceptLearning, onStartIntentionLearning, darkMode }: {
   bookId: string;
-  onStartPractice: (paragraph: Paragraph) => void;
-  onStartConceptLearning: (source: { chapterId?: string; paragraphId?: string; content: string }, chapter: import('@infrastructure/types').Chapter) => void;
-  onStartIntentionLearning: (source: { chapterId?: string; paragraphId?: string; content: string }, chapter: import('@infrastructure/types').Chapter) => void;
-  practiceLoading: boolean;
+  onStartConceptLearning: (paragraph: Paragraph) => void;
+  onStartIntentionLearning: (paragraph: Paragraph) => void;
   darkMode: boolean;
 }) {
   return (
     <div style={{ backgroundColor: darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', padding: '1.5rem' }}>
       <ChapterView
         bookId={bookId}
-        onStartPractice={onStartPractice}
         onStartConceptLearning={onStartConceptLearning}
         onStartIntentionLearning={onStartIntentionLearning}
         onQuestionsChange={() => {}}

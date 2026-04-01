@@ -49,3 +49,13 @@ type VocabularyCard struct {
 	Definition string `json:"definition"`
 	Context    string `json:"context"`
 }
+
+type SelectionQuestionData struct {
+	Question       string `json:"question"`
+	Answer         string `json:"answer"`
+	KnowledgePoint string `json:"knowledge_point"`
+}
+
+type GenerateSelectionQuestionsResult struct {
+	Questions []SelectionQuestionData `json:"questions"`
+}

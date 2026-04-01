@@ -39,6 +39,7 @@ export function useEPUBReaderHuoChuLi({
     setSelectedText: jiChu.setSelectedText,
     setShowMenu: jiChu.setShowMenu,
     setSelectionRect: jiChu.setSelectionRect,
+    setCurrentCfiRange: jiChu.setCurrentCfiRange,
   });
 
   return {

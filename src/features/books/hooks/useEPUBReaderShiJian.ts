@@ -1,7 +1,7 @@
 // @审计已完成
 // EPUB 阅读器事件处理 Hook
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { Rendition, Contents } from 'epubjs';
 import { useEPUBReaderFanYeHeYeMa } from './useEPUBReaderFanYeHeYeMa';
 
@@ -18,36 +18,69 @@ interface UseEPUBReaderShiJianProps {
   setSelectedText: (text: string) => void;
   setShowMenu: (show: boolean) => void;
   setSelectionRect: (rect: DOMRect | null) => void;
+  setCurrentCfiRange: (cfiRange: string | null) => void;
 }
 
 export function useEPUBReaderShiJian({
   yingYongZhuTi, zhuTi, ziTiDaXiao, setYeMaXinXi, setLocation,
   chuLiSouSuoJieGuo, tiaoDaoShangYiGe, tiaoDaoXiaYiGe, huaCiKaiQi,
-  setSelectedText, setShowMenu, setSelectionRect,
+  setSelectedText, setShowMenu, setSelectionRect, setCurrentCfiRange,
 }: UseEPUBReaderShiJianProps) {
   const fanYeHeYeMa = useEPUBReaderFanYeHeYeMa({
     setYeMaXinXi, setLocation, tiaoDaoShangYiGe, tiaoDaoXiaYiGe,
   });
 
+  const cfiRangeRef = useRef<string | null>(null);
+
   const handleTextSelected = useCallback((cfiRange: string, contents: Contents) => {
+    if (!huaCiKaiQi) return;
+    cfiRangeRef.current = cfiRange;
     const rendition = fanYeHeYeMa.renditionRef.current;
-    if (!rendition || !huaCiKaiQi) return;
+    if (!rendition) return;
     try {
       const text = rendition.getRange(cfiRange).toString().trim();
       if (text) {
         setSelectedText(text);
+        setCurrentCfiRange(cfiRange);
+      }
+    } catch (error) { console.error('处理选中文本时出错:', error); }
+  }, [huaCiKaiQi, setSelectedText, setCurrentCfiRange, fanYeHeYeMa.renditionRef]);
+
+  const handleMouseUp = useCallback((contents: Contents) => {
+    if (!huaCiKaiQi) return;
+    const rendition = fanYeHeYeMa.renditionRef.current;
+    if (!rendition || !cfiRangeRef.current) return;
+    try {
+      const text = rendition.getRange(cfiRangeRef.current).toString().trim();
+      if (text) {
         setShowMenu(true);
-        const range = rendition.getRange(cfiRange);
+        const range = rendition.getRange(cfiRangeRef.current);
         const rect = range.getBoundingClientRect();
-        setSelectionRect(rect);
+        const iframeRect = contents.window.document.documentElement.getBoundingClientRect();
+        const correctedRect = {
+          top: rect.top - iframeRect.top + contents.window.scrollY,
+          left: rect.left - iframeRect.left + contents.window.scrollX,
+          width: rect.width,
+          height: rect.height,
+          right: rect.right - iframeRect.left + contents.window.scrollX,
+          bottom: rect.bottom - iframeRect.top + contents.window.scrollY,
+        };
+        setSelectionRect(correctedRect);
       }
       contents.window.getSelection()?.removeAllRanges();
-    } catch (error) { console.error('处理选中文本时出错:', error); }
-  }, [huaCiKaiQi, setSelectedText, setShowMenu, setSelectionRect]);
+      cfiRangeRef.current = null;
+    } catch (error) { console.error('处理鼠标松开时出错:', error); }
+  }, [huaCiKaiQi, setShowMenu, setSelectionRect, fanYeHeYeMa.renditionRef]);
 
   const handleRendition = useCallback((rendition: Rendition) => {
     fanYeHeYeMa.renditionRef.current = rendition;
     rendition.on('selected', handleTextSelected);
+    rendition.hooks.content.register((contents: Contents) => {
+      contents.window.addEventListener('mouseup', () => handleMouseUp(contents));
+      return () => {
+        contents.window.removeEventListener('mouseup', () => handleMouseUp(contents));
+      };
+    });
     rendition.on('rendered', () => {
       fanYeHeYeMa.gengXinYeMaXinXi();
     });
@@ -60,7 +93,7 @@ export function useEPUBReaderShiJian({
       fanYeHeYeMa.tocRef.current = nav.toc || [];
       fanYeHeYeMa.gengXinYeMaXinXi();
     });
-  }, [handleTextSelected, yingYongZhuTi, zhuTi, ziTiDaXiao, fanYeHeYeMa]);
+  }, [handleTextSelected, handleMouseUp, yingYongZhuTi, zhuTi, ziTiDaXiao, fanYeHeYeMa]);
 
   useEffect(() => {
     const rendition = fanYeHeYeMa.renditionRef.current;

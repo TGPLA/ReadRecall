@@ -2,6 +2,7 @@
 // EPUB 阅读器基础 Hooks
 
 import { useState, useCallback } from 'react';
+import type { Rendition } from 'epubjs';
 import { useHuaCiJiaoHu } from './useHuaCiChuangJian';
 import { useHuaXianChuTi } from './useHuaXianChuTi';
 import { useYueDuJinDu } from './useYueDuJinDu';
@@ -13,12 +14,14 @@ interface UseEPUBReaderJiChuHuoProps {
   bookId: string;
   chapterId: string;
   onParagraphCreated?: () => void;
+  renditionRef?: React.RefObject<Rendition | undefined>;
 }
 
 export function useEPUBReaderJiChuHuo({ 
   bookId, 
   chapterId, 
-  onParagraphCreated 
+  onParagraphCreated,
+  renditionRef,
 }: UseEPUBReaderJiChuHuoProps) {
   const currentUser = authService.getCurrentUser();
   const userId = currentUser?.id || 'guest';
@@ -39,22 +42,24 @@ export function useEPUBReaderJiChuHuo({
   const [ziTiDaXiao, setZiTiDaXiao] = useState(100);
   const [huaCiKaiQi, setHuaCiKaiQi] = useState(true);
 
-  const {
-    selectedText,
-    showMenu,
-    selectionRect,
-    setSelectedText,
-    setShowMenu,
-    setSelectionRect,
-    handleCancel,
-  } = useHuaCiJiaoHu(huaCiKaiQi);
+  const huaCiJiaoHu = useHuaCiJiaoHu(huaCiKaiQi);
 
   const {
     generating,
     handleGenerateQuestion,
     handleHighlight,
     handleCopy,
-  } = useHuaXianChuTi(chapterId, handleCancel);
+  } = useHuaXianChuTi({
+    userId,
+    bookId,
+    chapterId,
+    onClose: huaCiJiaoHu.handleCancel,
+    renditionRef,
+    huaCiJiaoHuRef: {
+      getCurrentCfiRange: huaCiJiaoHu.getCurrentCfiRange,
+      setCurrentCfiRange: huaCiJiaoHu.setCurrentCfiRange,
+    },
+  });
 
   return {
     location,
@@ -73,16 +78,17 @@ export function useEPUBReaderJiChuHuo({
     setYeMaXinXi,
     ziTiDaXiao,
     setZiTiDaXiao,
-    selectedText,
-    showMenu,
-    selectionRect,
+    selectedText: huaCiJiaoHu.selectedText,
+    showMenu: huaCiJiaoHu.showMenu,
+    selectionRect: huaCiJiaoHu.selectionRect,
     generating,
     huaCiKaiQi,
     setHuaCiKaiQi,
-    setSelectedText,
-    setShowMenu,
-    setSelectionRect,
-    handleCancel,
+    setSelectedText: huaCiJiaoHu.setSelectedText,
+    setShowMenu: huaCiJiaoHu.setShowMenu,
+    setSelectionRect: huaCiJiaoHu.setSelectionRect,
+    setCurrentCfiRange: huaCiJiaoHu.setCurrentCfiRange,
+    handleCancel: huaCiJiaoHu.handleCancel,
     handleGenerateQuestion,
     handleHighlight,
     handleCopy,

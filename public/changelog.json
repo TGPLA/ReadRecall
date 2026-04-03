@@ -1,12 +1,12 @@
 {
   "projectName": "ReadRecall",
-  "version": "1.7.6",
+  "version": "1.7.7",
   "changelog": [
     {
-      "version": "1.7.6",
-      "date": "2026-03-11",
-      "category": "[Architecture]",
-      "content": "部署流程优化：1. 部署脚本新增步骤：上传前先清空服务器旧文件（rm -rf）；2. 避免旧版本文件堆积问题；3. 更新部署指南文档说明"
+      "version": "1.7.7",
+      "date": "2026-04-03",
+      "category": "[BugFix]",
+      "content": "修复删除高亮后视觉高亮不消失的问题：1. 使用 rendition.annotations.remove(cfiRange, 'highlight') 精确删除特定高亮；2. 删除后延迟 150ms 重新渲染当前章节（manager.clear + rendition.display）以刷新视图；3. 解决 epubjs 虚拟渲染导致的高亮元素无法直接删除问题。"
     },
     {
       "version": "1.7.5",

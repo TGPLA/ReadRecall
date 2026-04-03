@@ -23,7 +23,17 @@ export function useSouSuo() {
 
   const gaoLiangSouSuoJieGuo = useCallback((rendition: Rendition, jieGuo: SouSuoJieGuo[]) => {
     jieGuo.forEach((jieGuoXiang) => {
-      rendition.annotations?.add('highlight', jieGuoXiang.cfi);
+      rendition.annotations?.highlight(
+        jieGuoXiang.cfi,
+        {},
+        () => {},
+        'epubjs-hl',
+        {
+          'fill': 'yellow',
+          'fill-opacity': '0.3',
+          'mix-blend-mode': 'multiply'
+        }
+      );
     });
   }, []);
 

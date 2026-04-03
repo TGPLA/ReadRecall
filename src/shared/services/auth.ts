@@ -98,7 +98,23 @@ class AuthService {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      if (!text) {
+        return { 
+          user: null, 
+          error: { message: '服务器无响应，请稍后重试' } 
+        };
+      }
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        return { 
+          user: null, 
+          error: { message: '响应解析失败，请稍后重试' } 
+        };
+      }
 
       if (!response.ok || !data.success) {
         return { 

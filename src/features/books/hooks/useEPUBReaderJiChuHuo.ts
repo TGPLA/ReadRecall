@@ -15,6 +15,13 @@ interface UseEPUBReaderJiChuHuoProps {
   chapterId: string;
   onParagraphCreated?: () => void;
   renditionRef?: React.RefObject<Rendition | undefined>;
+  bookRef?: React.RefObject<any>;
+  showMenu?: boolean;
+  setSelectedText?: (text: string) => void;
+  setShowMenu?: (show: boolean) => void;
+  setSelectionRect?: (rect: DOMRect | null) => void;
+  setCurrentCfiRange?: (cfiRange: string | null) => void;
+  getCurrentCfiRange?: () => string | null;
 }
 
 export function useEPUBReaderJiChuHuo({ 
@@ -22,6 +29,13 @@ export function useEPUBReaderJiChuHuo({
   chapterId, 
   onParagraphCreated,
   renditionRef,
+  bookRef,
+  showMenu: externalShowMenu,
+  setSelectedText: externalSetSelectedText,
+  setShowMenu: externalSetShowMenu,
+  setSelectionRect: externalSetSelectionRect,
+  setCurrentCfiRange: externalSetCurrentCfiRange,
+  getCurrentCfiRange: externalGetCurrentCfiRange,
 }: UseEPUBReaderJiChuHuoProps) {
   const currentUser = authService.getCurrentUser();
   const userId = currentUser?.id || 'guest';
@@ -46,8 +60,10 @@ export function useEPUBReaderJiChuHuo({
 
   const {
     generating,
+    highlights,
     handleGenerateQuestion,
     handleHighlight,
+    handleDeleteHighlight,
     handleCopy,
   } = useHuaXianChuTi({
     userId,
@@ -55,9 +71,10 @@ export function useEPUBReaderJiChuHuo({
     chapterId,
     onClose: huaCiJiaoHu.handleCancel,
     renditionRef,
+    bookRef,
     huaCiJiaoHuRef: {
-      getCurrentCfiRange: huaCiJiaoHu.getCurrentCfiRange,
-      setCurrentCfiRange: huaCiJiaoHu.setCurrentCfiRange,
+      getCurrentCfiRange: externalGetCurrentCfiRange || huaCiJiaoHu.getCurrentCfiRange,
+      setCurrentCfiRange: externalSetCurrentCfiRange || huaCiJiaoHu.setCurrentCfiRange,
     },
   });
 
@@ -78,19 +95,21 @@ export function useEPUBReaderJiChuHuo({
     setYeMaXinXi,
     ziTiDaXiao,
     setZiTiDaXiao,
-    selectedText: huaCiJiaoHu.selectedText,
-    showMenu: huaCiJiaoHu.showMenu,
-    selectionRect: huaCiJiaoHu.selectionRect,
+    selectedText: externalShowMenu !== undefined ? huaCiJiaoHu.selectedText : huaCiJiaoHu.selectedText,
+    showMenu: externalShowMenu !== undefined ? externalShowMenu : huaCiJiaoHu.showMenu,
+    selectionRect: externalShowMenu !== undefined ? huaCiJiaoHu.selectionRect : huaCiJiaoHu.selectionRect,
     generating,
+    highlights,
     huaCiKaiQi,
     setHuaCiKaiQi,
-    setSelectedText: huaCiJiaoHu.setSelectedText,
-    setShowMenu: huaCiJiaoHu.setShowMenu,
-    setSelectionRect: huaCiJiaoHu.setSelectionRect,
-    setCurrentCfiRange: huaCiJiaoHu.setCurrentCfiRange,
+    setSelectedText: externalSetSelectedText || huaCiJiaoHu.setSelectedText,
+    setShowMenu: externalSetShowMenu || huaCiJiaoHu.setShowMenu,
+    setSelectionRect: externalSetSelectionRect || huaCiJiaoHu.setSelectionRect,
+    setCurrentCfiRange: externalSetCurrentCfiRange || huaCiJiaoHu.setCurrentCfiRange,
     handleCancel: huaCiJiaoHu.handleCancel,
     handleGenerateQuestion,
     handleHighlight,
+    handleDeleteHighlight,
     handleCopy,
   };
 }

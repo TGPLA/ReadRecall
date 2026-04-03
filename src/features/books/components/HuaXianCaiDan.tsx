@@ -2,19 +2,26 @@
 // 划线多功能菜单组件 - 微信读书风格
 
 import { useState, useRef, useEffect } from 'react';
-import type { ChuTiLeiXing } from '../hooks/useHuaXianChuTi';
+import type { ChuTiLeiXing, GaoLiangYanSe } from '../hooks/useHuaXianChuTi';
 
 interface HuaXianCaiDanProps {
   selectedText: string;
   position: { top: number; left: number };
   generating: boolean;
   onGenerateQuestion: (text: string, type: ChuTiLeiXing) => void;
-  onHighlight: (text: string) => void;
+  onHighlight: (text: string, yanSe: GaoLiangYanSe, beiZhu: string) => void;
   onCopy: (text: string) => void;
   onCancel: () => void;
 }
 
 const CHU_TI_LEI_XING: ChuTiLeiXing[] = ['名词解释', '意图理解', '生活应用'];
+
+const YAN_SE_XUAN_XIANG: { value: GaoLiangYanSe; label: string; color: string }[] = [
+  { value: 'yellow', label: '黄色', color: '#fef08a' },
+  { value: 'green', label: '绿色', color: '#86efac' },
+  { value: 'blue', label: '蓝色', color: '#93c5fd' },
+  { value: 'pink', label: '粉色', color: '#f9a8d4' },
+];
 
 export function HuaXianCaiDan({
   selectedText,
@@ -26,6 +33,9 @@ export function HuaXianCaiDan({
   onCancel,
 }: HuaXianCaiDanProps) {
   const [showSubMenu, setShowSubMenu] = useState(false);
+  const [yanSe, setYanSe] = useState<GaoLiangYanSe>('yellow');
+  const [beiZhu, setBeiZhu] = useState('');
+  const [showColorPicker, setShowColorPicker] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -61,6 +71,11 @@ export function HuaXianCaiDan({
     transition: 'all 0.2s',
   };
 
+  const handleHighlightClick = () => {
+    onHighlight(selectedText, yanSe, beiZhu);
+    setBeiZhu('');
+  };
+
   return (
     <div ref={menuRef} style={menuStyle}>
       <div style={{
@@ -70,67 +85,104 @@ export function HuaXianCaiDan({
         boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4)',
         overflow: 'hidden',
         padding: '0.25rem',
+        flexDirection: 'column',
       }}>
-        <button
-          onClick={() => setShowSubMenu(!showSubMenu)}
-          disabled={generating}
-          style={{
-            ...buttonStyle,
-            color: showSubMenu ? '#3b82f6' : '#ffffff',
-            cursor: generating ? 'not-allowed' : 'pointer',
-            opacity: generating ? 0.5 : 1,
-          }}
-        >
-          <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          AI问书
-        </button>
+        <div style={{ display: 'flex' }}>
+          <button
+            onClick={() => setShowSubMenu(!showSubMenu)}
+            disabled={generating}
+            style={{
+              ...buttonStyle,
+              color: showSubMenu ? '#3b82f6' : '#ffffff',
+              cursor: generating ? 'not-allowed' : 'pointer',
+              opacity: generating ? 0.5 : 1,
+            }}
+          >
+            <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            AI问书
+          </button>
 
-        <button
-          onClick={() => onCopy(selectedText)}
-          style={{
-            ...buttonStyle,
-          }}
-        >
-          <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-          复制
-        </button>
+          <button
+            onClick={() => onCopy(selectedText)}
+            style={{
+              ...buttonStyle,
+            }}
+          >
+            <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            复制
+          </button>
 
-        <button
-          style={{
-            ...buttonStyle,
-          }}
-        >
-          <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-          </svg>
-          马克笔
-        </button>
+          <button
+            onClick={() => setShowColorPicker(!showColorPicker)}
+            style={{
+              ...buttonStyle,
+            }}
+          >
+            <div style={{ width: '1.25rem', height: '1.25rem', borderRadius: '0.25rem', backgroundColor: YAN_SE_XUAN_XIANG.find(y => y.value === yanSe)?.color || '#fef08a' }} />
+            高亮
+          </button>
+        </div>
 
-        <button
-          style={{
-            ...buttonStyle,
-          }}
-        >
-          <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-          </svg>
-          波浪线
-        </button>
+        {showColorPicker && (
+          <div style={{ padding: '0.5rem', borderTop: '1px solid #444444', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {YAN_SE_XUAN_XIANG.map(xuanXiang => (
+              <button
+                key={xuanXiang.value}
+                onClick={() => { setYanSe(xuanXiang.value); setShowColorPicker(false); }}
+                style={{
+                  width: '1.5rem',
+                  height: '1.5rem',
+                  borderRadius: '0.25rem',
+                  border: yanSe === xuanXiang.value ? '2px solid #ffffff' : '2px solid transparent',
+                  backgroundColor: xuanXiang.color,
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+                title={xuanXiang.label}
+              />
+            ))}
+          </div>
+        )}
 
-        <button
-          style={{
-            ...buttonStyle,
-          }}
-        >
-          <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          直线
-        </button>
+        {showColorPicker && (
+          <div style={{ padding: '0.5rem', borderTop: '1px solid #444444' }}>
+            <input
+              type="text"
+              value={beiZhu}
+              onChange={(e) => setBeiZhu(e.target.value)}
+              placeholder="添加备注（可选）"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                borderRadius: '0.25rem',
+                border: '1px solid #555555',
+                backgroundColor: '#222222',
+                color: '#ffffff',
+                fontSize: '0.75rem',
+              }}
+            />
+            <button
+              onClick={handleHighlightClick}
+              style={{
+                width: '100%',
+                marginTop: '0.5rem',
+                padding: '0.5rem',
+                border: 'none',
+                borderRadius: '0.25rem',
+                backgroundColor: '#3b82f6',
+                color: '#ffffff',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+              }}
+            >
+              保存高亮
+            </button>
+          </div>
+        )}
       </div>
 
       <div style={{

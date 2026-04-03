@@ -3,9 +3,11 @@ package config
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"reading-reflection/models"
+	"time"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -113,16 +115,52 @@ func InitDB() {
 	)
 
 	var err error
-	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal("❌ 数据库连接失败:", err)
+
+	log.Println("🔄 尝试连接数据库...")
+	maxRetries := 5
+	retryDelay := 2 * time.Second
+
+	for i := 0; i < maxRetries; i++ {
+		if i > 0 {
+			log.Printf("⏳ 第 %d/%d 次重试，等待 %d 秒...", i+1, maxRetries, retryDelay/time.Second)
+			time.Sleep(retryDelay)
+		}
+
+		if AppConfig.DBPort == "3307" || AppConfig.DBHost == "127.0.0.1" || AppConfig.DBHost == "localhost" {
+			log.Printf("🔍 检测 SSH 隧道本地端口 %s 是否可用...", AppConfig.DBPort)
+			address := net.JoinHostPort(AppConfig.DBHost, AppConfig.DBPort)
+			conn, err := net.DialTimeout("tcp", address, 2*time.Second)
+			if err != nil {
+				log.Printf("⚠️  端口 %s 不可用: %v", AppConfig.DBPort, err)
+				if i < maxRetries-1 {
+					log.Println("💡 请检查 SSH 隧道是否已建立: ssh -f -N -L 3307:127.0.0.1:3306 root@linyubo.top")
+				}
+				continue
+			}
+			conn.Close()
+			log.Printf("✅ 端口 %s 可用", AppConfig.DBPort)
+		}
+
+		DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		if err == nil {
+			log.Println("✅ 数据库连接成功")
+			break
+		}
+
+		log.Printf("❌ 第 %d/%d 次连接失败: %v", i+1, maxRetries, err)
+		if i == maxRetries-1 {
+			log.Fatal("🔴 数据库连接重试次数耗尽，启动失败")
+		}
 	}
-	log.Println("✅ 数据库连接成功")
 
 	log.Println("🔍 检查并执行数据库迁移 v5.0...")
-	migrateV5()
+	if DB != nil {
+		migrateV5()
+	} else {
+		log.Println("⚠️  数据库未连接，跳过迁移")
+	}
 
-	log.Println("⏭️  跳过自动迁移（表结构已存在）")
+	log.Println("⏭️  启动完成")
 }
 
 func migrateV5() {

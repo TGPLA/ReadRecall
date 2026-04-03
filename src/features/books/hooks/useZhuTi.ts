@@ -35,6 +35,13 @@ export function useZhuTi({ userId, bookId }: UseZhuTiProps) {
     const themes = rendition.themes;
     themes.override('color', peizhi.textColor);
     themes.override('background', peizhi.backgroundColor);
+    themes.default({
+      '.epubjs-hl': {
+        'fill': 'yellow',
+        'fill-opacity': '0.3',
+        'mix-blend-mode': 'multiply'
+      }
+    });
   };
 
   return {

@@ -1,9 +1,10 @@
 // @审计已完成
 // EPUB 阅读器组件 - 封装 react-reader，集成所有功能
 
-import React from 'react';
+import React, { useState } from 'react';
 import { EPUBReaderGongJuLan } from './EPUBReaderGongJuLan';
 import { EPUBYueDuQuYu } from './EPUBYueDuQuYu';
+import { GaoLiangCeLan } from './GaoLiangCeLan';
 import { useEPUBReaderHuoChuLi } from '../hooks/useEPUBReaderHuoChuLi';
 
 interface EPUBReaderProps {
@@ -17,6 +18,14 @@ interface EPUBReaderProps {
 
 export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagraphCreated }: EPUBReaderProps) {
   const p = useEPUBReaderHuoChuLi({ bookId, chapterId, onParagraphCreated });
+  const [showGaoLiangCeLan, setShowGaoLiangCeLan] = useState(false);
+
+  const handleJumpToCfi = (cfiRange: string) => {
+    if (p.renditionRef.current) {
+      p.renditionRef.current.display(cfiRange);
+    }
+    setShowGaoLiangCeLan(false);
+  };
   
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: darkMode ? '#111827' : '#ffffff' }}>
@@ -36,26 +45,38 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
         onClose={onClose}
         huaCiKaiQi={p.huaCiKaiQi}
         onHuaCiQieHuan={() => p.setHuaCiKaiQi(!p.huaCiKaiQi)}
+        gaoLiangShuLiang={p.highlights.length}
+        onGaoLiangCeLanToggle={() => setShowGaoLiangCeLan(!showGaoLiangCeLan)}
       />
-      <EPUBYueDuQuYu
-        url={url}
-        location={p.location}
-        onLocationChanged={p.handleLocationChanged}
-        onGetRendition={p.handleRendition}
-        souSuoCi={p.souSuoCi}
-        onSouSuoJieGuo={p.handleSouSuoJieGuo}
-        fanYeAnNiuKeJian={!!p.renditionRef.current}
-        onShangYiYe={p.handlePrevPage}
-        onXiaYiYe={p.handleNextPage}
-        selectedText={p.selectedText}
-        showMenu={p.showMenu}
-        selectionRect={p.selectionRect}
-        generating={p.generating}
-        onCancel={p.handleCancel}
-        onGenerateQuestion={p.handleGenerateQuestion}
-        onHighlight={p.handleHighlight}
-        onCopy={p.handleCopy}
-      />
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <EPUBYueDuQuYu
+          url={url}
+          location={p.location}
+          onLocationChanged={p.handleLocationChanged}
+          onGetRendition={p.handleRendition}
+          souSuoCi={p.souSuoCi}
+          onSouSuoJieGuo={p.handleSouSuoJieGuo}
+          fanYeAnNiuKeJian={!!p.renditionRef.current}
+          onShangYiYe={p.handlePrevPage}
+          onXiaYiYe={p.handleNextPage}
+          selectedText={p.selectedText}
+          showMenu={p.showMenu}
+          selectionRect={p.selectionRect}
+          generating={p.generating}
+          onCancel={p.handleCancel}
+          onGenerateQuestion={p.handleGenerateQuestion}
+          onHighlight={p.handleHighlight}
+          onCopy={p.handleCopy}
+        />
+        <GaoLiangCeLan
+          darkMode={darkMode}
+          highlights={p.highlights}
+          onDelete={p.handleDeleteHighlight}
+          onJump={handleJumpToCfi}
+          isOpen={showGaoLiangCeLan}
+          onToggle={() => setShowGaoLiangCeLan(!showGaoLiangCeLan)}
+        />
+      </div>
     </div>
   );
 }

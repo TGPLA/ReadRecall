@@ -1,6 +1,7 @@
 // @审计已完成
 // EPUB 阅读器 Hooks 初始化 Hook
 
+import { useState, useCallback } from 'react';
 import { useEPUBReaderJiChuHuo } from './useEPUBReaderJiChuHuo';
 import { useEPUBReaderShiJian } from './useEPUBReaderShiJian';
 
@@ -15,8 +16,24 @@ export function useEPUBReaderHuoChuLi({
   chapterId, 
   onParagraphCreated 
 }: UseEPUBReaderHuoChuLiProps) {
-  const jiChu = useEPUBReaderJiChuHuo({ bookId, chapterId, onParagraphCreated });
-  
+  const [showMenu, setShowMenu] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
+  const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
+  const [currentCfiRange, setCurrentCfiRange] = useState<string | null>(null);
+
+  const handleShowMenu = useCallback((show: boolean) => {
+    setShowMenu(show);
+    if (!show) {
+      setSelectedText('');
+      setSelectionRect(null);
+      setCurrentCfiRange(null);
+    }
+  }, []);
+
+  const getCurrentCfiRange = useCallback(() => {
+    return currentCfiRange;
+  }, [currentCfiRange]);
+
   const {
     renditionRef,
     handleRendition,
@@ -26,20 +43,36 @@ export function useEPUBReaderHuoChuLi({
     handleXiaYiGeSouSuoJieGuo,
     handleLocationChanged,
     handleSouSuoJieGuo,
+    bookRef,
   } = useEPUBReaderShiJian({
-    yingYongZhuTi: jiChu.yingYongZhuTi,
-    zhuTi: jiChu.zhuTi,
-    ziTiDaXiao: jiChu.ziTiDaXiao,
-    setYeMaXinXi: jiChu.setYeMaXinXi,
-    setLocation: jiChu.setLocation,
-    chuLiSouSuoJieGuo: jiChu.chuLiSouSuoJieGuo,
-    tiaoDaoShangYiGe: jiChu.tiaoDaoShangYiGe,
-    tiaoDaoXiaYiGe: jiChu.tiaoDaoXiaYiGe,
-    huaCiKaiQi: jiChu.huaCiKaiQi,
-    setSelectedText: jiChu.setSelectedText,
-    setShowMenu: jiChu.setShowMenu,
-    setSelectionRect: jiChu.setSelectionRect,
-    setCurrentCfiRange: jiChu.setCurrentCfiRange,
+    yingYongZhuTi: undefined,
+    zhuTi: 'light',
+    ziTiDaXiao: 100,
+    setYeMaXinXi: () => {},
+    setLocation: () => {},
+    chuLiSouSuoJieGuo: () => {},
+    tiaoDaoShangYiGe: () => undefined,
+    tiaoDaoXiaYiGe: () => undefined,
+    huaCiKaiQi: true,
+    showMenu: showMenu,
+    setSelectedText: setSelectedText,
+    setShowMenu: handleShowMenu,
+    setSelectionRect: setSelectionRect,
+    setCurrentCfiRange: setCurrentCfiRange,
+  });
+
+  const jiChu = useEPUBReaderJiChuHuo({ 
+    bookId, 
+    chapterId, 
+    onParagraphCreated, 
+    renditionRef, 
+    bookRef,
+    showMenu,
+    setSelectedText,
+    setShowMenu: handleShowMenu,
+    setSelectionRect,
+    setCurrentCfiRange,
+    getCurrentCfiRange,
   });
 
   return {
@@ -56,10 +89,12 @@ export function useEPUBReaderHuoChuLi({
     yeMaXinXi: jiChu.yeMaXinXi,
     ziTiDaXiao: jiChu.ziTiDaXiao,
     setZiTiDaXiao: jiChu.setZiTiDaXiao,
-    selectedText: jiChu.selectedText,
-    showMenu: jiChu.showMenu,
-    selectionRect: jiChu.selectionRect,
+    selectedText: selectedText,
+    showMenu: showMenu,
+    selectionRect: selectionRect,
     generating: jiChu.generating,
+    highlights: jiChu.highlights,
+    handleDeleteHighlight: jiChu.handleDeleteHighlight,
     huaCiKaiQi: jiChu.huaCiKaiQi,
     setHuaCiKaiQi: jiChu.setHuaCiKaiQi,
     handleCancel: jiChu.handleCancel,
@@ -74,5 +109,6 @@ export function useEPUBReaderHuoChuLi({
     handleXiaYiGeSouSuoJieGuo,
     handleLocationChanged,
     handleSouSuoJieGuo,
+    bookRef,
   };
 }

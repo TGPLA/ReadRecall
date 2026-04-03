@@ -1,0 +1,23 @@
+# SSH 配置文件 - 防止 SSH 隧道断连
+# 使用说明：将此文件复制到 C:\Users\Administrator\.ssh\config
+
+# 腾讯云服务器配置
+Host linyubo.top
+    HostName 114.132.47.245
+    User root
+    Port 22
+    IdentityFile ~/.ssh/id_rsa
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+    TCPKeepAlive yes
+    Compression yes
+
+Host 114.132.47.245
+    HostName 114.132.47.245
+    User root
+    Port 22
+    IdentityFile ~/.ssh/id_rsa
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+    TCPKeepAlive yes
+    Compression yes

@@ -1,0 +1,73 @@
+/* @审计已完成 */
+/* 阅读器配色 + react-reader库样式强制覆盖 */
+
+/* ====== 微信读书风格：层级感深色沉浸式（纸张浮在桌面上）====== */
+.yue-du-qi {
+  --ye-du-bei-jing: #121212;
+  --zhi-zhen-bei-jing: #222228;
+  --zheng-wen-yan-se: #BBBBc4;
+  --biao-ti-yan-se: #D4707E;
+  --ci-yao-wen-zi: #7A7A85;
+  --gong-ju-lan-bei-jing: rgba(255, 255, 255, 0.06);
+  --bian-kuang-yan-se: #2E2E36;
+}
+
+.yue-du-qi[data-theme="light"] {
+  --ye-du-bei-jing: #E5E5E8;
+  --zhi-zhen-bei-jing: #F2F2F4;
+  --zheng-wen-yan-se: #1A1A2E;
+  --biao-ti-yan-se: #A04030;
+  --ci-yao-wen-zi: #6B7280;
+  --gong-ju-lan-bei-jing: rgba(0, 0, 0, 0.04);
+  --bian-kuang-yan-se: #D0D0D6;
+}
+
+/* ====== 强制覆盖 react-reader 库内部 inline style（根因修复）====== */
+.yue-du-qi div[style*="inset: 50"] {
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  inset: 0 !important;
+}
+
+/* 核心修复：覆盖 readerArea 的 #fff 背景 + 取消 transition 动画（白屏闪烁根因） */
+.yue-du-qi .readerArea {
+  background-color: var(--zhi-zhen-bei-jing) !important;
+  background: var(--zhi-zhen-bei-jing) !important;
+  transition: none !important;
+}
+
+.yue-du-qi .epub-container {
+  background: var(--zhi-zhen-bei-jing) !important;
+  background-color: var(--zhi-zhen-bei-jing) !important;
+  transition: none !important;
+}
+
+.yue-du-qi .arrow,
+.yue-du-qi .prev,
+.yue-du-qi .next,
+.yue-du-qi button[style*="position: absolute"],
+.yue-du-qi button[style*="left: 1"],
+.yue-du-qi button[style*="right: 1"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ====== 暗色模式翻页白屏闪烁修复（根因：iframe 默认白色背景）====== */
+.yue-du-qi iframe,
+.yue-du-qi iframe html,
+.yue-du-qi iframe body {
+  background-color: #222228 !important;
+  background: #222228 !important;
+  color: #BBBBc4 !important;
+}
+
+.yue-du-qi[data-theme="light"] iframe,
+.yue-du-qi[data-theme="light"] iframe html,
+.yue-du-qi[data-theme="light"] iframe body {
+  background-color: #F2F2F4 !important;
+  background: #F2F2F4 !important;
+}

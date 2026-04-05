@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { AppProvider, useApp } from '@infrastructure/hooks';
 import { BookShelf } from '@features/books/components/BookShelf';
-import { BookDetail } from '@features/books/components/BookDetail';
+import { EPUBReaderPage } from '@features/books/components/EPUBReaderPage';
 import { ChapterDetail } from '@features/books/components/ChapterDetail';
 import { DaTiZhu } from '@features/practice/DaTiZhu';
 import { GaiNianXueXi } from '@features/practice/GaiNianXueXi';
@@ -20,7 +20,7 @@ import { QuanPingJiaZai } from '@shared/utils/common/JiaZaiZhuangTai';
 import { CuoWuBianJie } from '@shared/utils/common/CuoWuBianJie';
 import type { Book, Paragraph, Question, Chapter } from '@infrastructure/types';
 
-type Page = 'shelf' | 'detail' | 'chapter-detail' | 'practice' | 'answer' | 'settings' | 'prompts' | 'concept-learning' | 'intention-learning';
+type Page = 'shelf' | 'reader' | 'chapter-detail' | 'practice' | 'answer' | 'settings' | 'prompts' | 'concept-learning' | 'intention-learning';
 
 interface LearningSource {
   chapterId?: string;
@@ -77,7 +77,15 @@ function AppContent() {
 
   const handleSelectBook = (book: Book) => {
     setSelectedBook(book);
-    setCurrentPage('detail');
+    setCurrentPage('reader');
+  };
+
+  const handleCloseReader = () => {
+    setCurrentPage('shelf');
+    setSelectedBook(null);
+    setSelectedParagraph(null);
+    setLearningSource(null);
+    setPracticeQuestions([]);
   };
 
   const handleBackToShelf = () => {
@@ -108,7 +116,7 @@ function AppContent() {
     if (selectedChapter) {
       setCurrentPage('chapter-detail');
     } else {
-      setCurrentPage('detail');
+      setCurrentPage('shelf');
     }
     setSelectedParagraph(null);
     setLearningSource(null);
@@ -119,7 +127,7 @@ function AppContent() {
     if (selectedChapter) {
       setCurrentPage('chapter-detail');
     } else {
-      setCurrentPage('detail');
+      setCurrentPage('shelf');
     }
     setSelectedParagraph(null);
     setLearningSource(null);
@@ -143,18 +151,16 @@ function AppContent() {
       {currentPage === 'shelf' && (
         <BookShelf onSelectBook={handleSelectBook} onOpenSettings={() => setCurrentPage('settings')} />
       )}
-      {currentPage === 'detail' && selectedBook && (
-        <BookDetail
+      {currentPage === 'reader' && selectedBook && (
+        <EPUBReaderPage
           book={selectedBook}
-          onBack={handleBackToShelf}
-          onStartConceptLearning={handleStartConceptLearning}
-          onStartIntentionLearning={handleStartIntentionLearning}
+          onClose={handleCloseReader}
         />
       )}
       {currentPage === 'chapter-detail' && selectedChapter && (
         <ChapterDetail
           chapter={selectedChapter}
-          onBack={() => { setSelectedChapter(null); setCurrentPage('detail'); }}
+          onBack={() => { setSelectedChapter(null); setCurrentPage('shelf'); }}
           onStartConceptLearning={(source) => handleStartConceptLearning(source, selectedChapter)}
           onStartIntentionLearning={(source) => handleStartIntentionLearning(source, selectedChapter)}
         />

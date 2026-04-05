@@ -1,7 +1,7 @@
 // @审计已完成
-// EPUB 阅读区域子组件
+// 阅读区域 - 微信读书风格：超大圆角卡片 + 双栏 + 内嵌翻页按钮
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ReactReader } from 'react-reader';
 import type { Rendition } from 'epubjs';
 import { HuaXianCaiDan } from './HuaXianCaiDan';
@@ -13,9 +13,6 @@ interface EPUBYueDuQuYuProps {
   onGetRendition: (rendition: Rendition) => void;
   souSuoCi: string;
   onSouSuoJieGuo: (jieGuo: any[]) => void;
-  fanYeAnNiuKeJian: boolean;
-  onShangYiYe: () => void;
-  onXiaYiYe: () => void;
   selectedText: string;
   showMenu: boolean;
   selectionRect: DOMRect | null;
@@ -24,59 +21,165 @@ interface EPUBYueDuQuYuProps {
   onGenerateQuestion: (text: string, type: '名词解释' | '意图理解' | '生活应用') => void;
   onHighlight: (text: string) => void;
   onCopy: (text: string) => void;
+  onShangYiYe?: () => void;
+  onXiaYiYe?: () => void;
+  keJian?: boolean;
+  darkMode?: boolean;
+}
+
+const BAO_CHI_QI_YANG_SHI: React.CSSProperties = {
+  flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'stretch', overflow: 'hidden',
+  padding: '32px 24px', maxWidth: '1250px', width: '100%', margin: '0 auto', boxSizing: 'border-box',
+};
+
+const KA_PIAN_YANG_SHI: React.CSSProperties = {
+  width: '100%', height: '100%', backgroundColor: 'var(--zhi-zhen-bei-jing)',
+  borderRadius: '12px', overflow: 'hidden', position: 'relative',
+  boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 2px 16px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column',
+};
+
+function ShuangLanPaiBan({ rendition }: { rendition: Rendition | undefined }) {
+  useEffect(() => {
+    if (!rendition) return;
+    rendition.themes.register('default', {});
+    rendition.themes.default('body', {
+      'background-color': 'var(--zhi-zhen-bei-jing) !important',
+      'background': 'var(--zhi-zhen-bei-jing) !important',
+      'padding': '48px 56px !important', 'column-count': '2 !important',
+      'column-gap': '56px !important', 'column-rule': '1px solid rgba(255,255,255,0.05) !important',
+      'max-width': 'none !important', 'height': '100% !important', 'box-sizing': 'border-box !important',
+      'overflow-y': 'auto !important', 'color': 'var(--zheng-wen-yan-se) !important',
+    });
+    rendition.themes.default('p, li, div, span', { 'max-width': 'none !important', 'break-inside': 'avoid !important', 'orphans': '3 !important', 'widows': '3 !important' });
+    rendition.themes.default('*', { 'max-width': 'none !important' });
+    (rendition as any).spread = () => true;
+  }, [rendition]);
+  return null;
+}
+
+function QingChuKuNeiBuBianJu({ containerRef }: { containerRef: React.RefObject<HTMLDivElement> }) {
+  useEffect(() => {
+    const qingChu = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const juBu = el.querySelectorAll<HTMLElement>('div[style*="inset"]');
+      juBu.forEach(d => { d.style.top = '0'; d.style.left = '0'; d.style.right = '0'; d.style.bottom = '0'; d.style.inset = '0'; });
+      const areaList = el.querySelectorAll<HTMLElement>('.readerArea');
+      areaList.forEach(d => { (d as any).style.backgroundColor = ''; });
+      const jianTou = el.querySelectorAll<HTMLElement>('.arrow, .prev, .next');
+      jianTou.forEach(d => { d.style.display = 'none'; });
+      const anNiuJianTou = el.querySelectorAll<HTMLButtonElement>('button[style*="position: absolute"]');
+      anNiuJianTou.forEach(d => { d.style.display = 'none'; d.style.visibility = 'hidden'; });
+    };
+    qingChu();
+    const timer = setInterval(qingChu, 500);
+    setTimeout(() => clearInterval(timer), 8000);
+    return () => clearInterval(timer);
+  }, [containerRef]);
+  return null;
 }
 
 export function EPUBYueDuQuYu({
-  url,
-  location,
-  onLocationChanged,
-  onGetRendition,
-  souSuoCi,
-  onSouSuoJieGuo,
-  fanYeAnNiuKeJian,
-  onShangYiYe,
-  onXiaYiYe,
-  selectedText,
-  showMenu,
-  selectionRect,
-  generating,
-  onCancel,
-  onGenerateQuestion,
-  onHighlight,
-  onCopy,
+  url, location, onLocationChanged, onGetRendition,
+  souSuoCi, onSouSuoJieGuo, selectedText, showMenu,
+  selectionRect, generating, onCancel, onGenerateQuestion,
+  onHighlight, onCopy, onShangYiYe, onXiaYiYe, keJian, darkMode,
 }: EPUBYueDuQuYuProps) {
+  const renditionRef = useRef<Rendition>();
+  const rongQiRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const handleGetRendition = (rendition: Rendition) => {
+    renditionRef.current = rendition;
+    onGetRendition(rendition);
+    setIsLoading(false);
+  };
+
+  const handleLocationChanged = (epubcfi: string) => {
+    setIsLoading(false);
+    onLocationChanged(epubcfi);
+  };
+
+  const anNiuYangShi: React.CSSProperties = {
+    padding: '6px 14px', border: 'none', borderRadius: '6px',
+    backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--ci-yao-wen-zi)',
+    cursor: 'pointer', fontSize: '13px', opacity: 0.7, transition: 'all 0.2s ease',
+    userSelect: 'none' as const, fontFamily: 'inherit',
+  };
+
   return (
-    <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-      {url && (
-        <ReactReader
-          url={url}
-          location={location}
-          locationChanged={onLocationChanged}
-          showToc={true}
-          getRendition={onGetRendition}
-          searchQuery={souSuoCi}
-          onSearchResults={onSouSuoJieGuo}
-          contextLength={20}
-          epubOptions={{ flow: 'paginated', allowScriptedContent: true }}
-        />
-      )}
-      {fanYeAnNiuKeJian && (
-        <>
-          <button onClick={onShangYiYe} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', width: '50px', height: '50px', borderRadius: '50%', backgroundColor: 'rgba(59, 130, 246, 0.8)', color: 'white', border: 'none', fontSize: '24px', cursor: 'pointer', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>‹</button>
-          <button onClick={onXiaYiYe} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', width: '50px', height: '50px', borderRadius: '50%', backgroundColor: 'rgba(59, 130, 246, 0.8)', color: 'white', border: 'none', fontSize: '24px', cursor: 'pointer', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>›</button>
-        </>
-      )}
-      {showMenu && selectedText && selectionRect && (
-        <HuaXianCaiDan
-          selectedText={selectedText}
-          position={{ top: selectionRect.top - 8, left: selectionRect.left + selectionRect.width / 2 }}
-          generating={generating}
-          onGenerateQuestion={onGenerateQuestion}
-          onHighlight={onHighlight}
-          onCopy={onCopy}
-          onCancel={onCancel}
-        />
-      )}
+    <div style={BAO_CHI_QI_YANG_SHI} ref={rongQiRef}>
+      <QingChuKuNeiBuBianJu containerRef={rongQiRef} />
+      <div style={KA_PIAN_YANG_SHI}>
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+          <ShuangLanPaiBan rendition={renditionRef.current} />
+          {url && (
+            <ReactReader
+              url={url}
+              location={location}
+              locationChanged={handleLocationChanged}
+              showToc={false}
+              getRendition={handleGetRendition}
+              searchQuery={souSuoCi}
+              onSearchResults={onSouSuoJieGuo}
+              contextLength={20}
+              epubOptions={{
+                flow: 'paginated',
+                allowScriptedContent: true,
+                width: '100%',
+                height: '100%',
+                styles: {
+                  body: { 'background-color': '#222228', 'color': '#BBBBc4' },
+                  '*': { 'background-color': '#222228', 'color': '#BBBBc4' },
+                },
+              }}
+            />
+          )}
+          {isLoading && url && (
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--zhi-zhen-bei-jing)', zIndex: 10 }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                <p style={{ color: 'var(--ci-yao-wen-zi)', fontSize: '14px' }}>正在加载书籍内容...</p>
+              </div>
+            </div>
+          )}
+          {showMenu && selectedText && selectionRect && (
+            <HuaXianCaiDan
+              selectedText={selectedText}
+              position={{ top: selectionRect.top - 8, left: selectionRect.left + selectionRect.width / 2 }}
+              generating={generating}
+              darkMode={darkMode}
+              onGenerateQuestion={onGenerateQuestion}
+              onHighlight={onHighlight}
+              onCopy={onCopy}
+              onCancel={onCancel}
+            />
+          )}
+        </div>
+
+        {keJian && (onShangYiYe || onXiaYiYe) && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', flexShrink: 0 }}>
+            {onShangYiYe && (
+              <button onClick={onShangYiYe} style={anNiuYangShi}
+                onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
+                onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}>
+                ← 上一页
+              </button>
+            )}
+            <div />
+            {onXiaYiYe && (
+              <button onClick={onXiaYiYe} style={anNiuYangShi}
+                onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
+                onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}>
+                下一页 →
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

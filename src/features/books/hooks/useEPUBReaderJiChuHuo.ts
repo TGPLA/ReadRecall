@@ -41,7 +41,7 @@ export function useEPUBReaderJiChuHuo({
   const userId = currentUser?.id || 'guest';
 
   const { location, setLocation } = useYueDuJinDu({ userId, bookId });
-  const { zhuTi, setZhuTi, yingYongZhuTi } = useZhuTi({ userId, bookId });
+  const { zhuTi, setZhuTi, qieHuanZhuTi, yingYongZhuTi } = useZhuTi({ userId, bookId });
   const {
     souSuoCi,
     setSouSuoCi,
@@ -60,10 +60,10 @@ export function useEPUBReaderJiChuHuo({
 
   const {
     generating,
-    highlights,
+    huaXianList,
     handleGenerateQuestion,
-    handleHighlight,
-    handleDeleteHighlight,
+    handleHuaXian,
+    handleDeleteHuaXian,
     handleCopy,
   } = useHuaXianChuTi({
     userId,
@@ -83,6 +83,7 @@ export function useEPUBReaderJiChuHuo({
     setLocation,
     zhuTi,
     setZhuTi,
+    qieHuanZhuTi,
     yingYongZhuTi,
     souSuoCi,
     setSouSuoCi,
@@ -99,7 +100,7 @@ export function useEPUBReaderJiChuHuo({
     showMenu: externalShowMenu !== undefined ? externalShowMenu : huaCiJiaoHu.showMenu,
     selectionRect: externalShowMenu !== undefined ? huaCiJiaoHu.selectionRect : huaCiJiaoHu.selectionRect,
     generating,
-    highlights,
+    huaXianList: huaXianList,
     huaCiKaiQi,
     setHuaCiKaiQi,
     setSelectedText: externalSetSelectedText || huaCiJiaoHu.setSelectedText,
@@ -108,8 +109,8 @@ export function useEPUBReaderJiChuHuo({
     setCurrentCfiRange: externalSetCurrentCfiRange || huaCiJiaoHu.setCurrentCfiRange,
     handleCancel: huaCiJiaoHu.handleCancel,
     handleGenerateQuestion,
-    handleHighlight,
-    handleDeleteHighlight,
+    handleHuaXian,
+    handleDeleteHuaXian,
     handleCopy,
   };
 }

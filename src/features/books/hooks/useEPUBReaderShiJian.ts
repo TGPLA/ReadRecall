@@ -5,6 +5,9 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { Rendition, Contents } from 'epubjs';
 import { useEPUBReaderFanYeHeYeMa } from './useEPUBReaderFanYeHeYeMa';
 
+const XUAN_ZE_YAN_CHI_MS = 300;
+const ZUI_XIAO_WEN_ZI_SHU = 2;
+
 interface UseEPUBReaderShiJianProps {
   yingYongZhuTi?: (rendition: Rendition, zhuTi: string) => void;
   zhuTi: string;
@@ -34,12 +37,33 @@ export function useEPUBReaderShiJian({
   const cfiRangeRef = useRef<string | null>(null);
   const contentsRef = useRef<Contents | null>(null);
   const bookRef = useRef<any>(null);
+  const xuanZeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const huaCiKaiQiRef = useRef(huaCiKaiQi);
+  const linshiBiaoZhuCfiRef = useRef<string | null>(null);
+  const showMenuRef = useRef(showMenu);
+
+  useEffect(() => {
+    huaCiKaiQiRef.current = huaCiKaiQi;
+  }, [huaCiKaiQi]);
+
+  useEffect(() => {
+    showMenuRef.current = showMenu;
+  }, [showMenu]);
 
   const handleHidePopup = useCallback(() => {
+    if (xuanZeTimerRef.current) {
+      clearTimeout(xuanZeTimerRef.current);
+      xuanZeTimerRef.current = null;
+    }
     const contents = contentsRef.current;
     if (!contents) return;
     const selection = contents.window.getSelection();
     if (!selection || selection.isCollapsed || selection.toString().trim().length === 0) {
+      const rendition = fanYeHeYeMa.renditionRef.current;
+      if (rendition && linshiBiaoZhuCfiRef.current) {
+        try { rendition.annotations.remove(linshiBiaoZhuCfiRef.current, 'temp-selection'); } catch {}
+        linshiBiaoZhuCfiRef.current = null;
+      }
       setShowMenu(false);
       setSelectedText('');
       setSelectionRect(null);
@@ -49,10 +73,33 @@ export function useEPUBReaderShiJian({
 
   const handleRendition = useCallback((rendition: Rendition) => {
     fanYeHeYeMa.renditionRef.current = rendition;
+    fanYeHeYeMa.setRenditionJiuXu(true);
     bookRef.current = rendition.book;
-    
+
+    const beiJingSe = zhuTi === 'dark' ? '#222228' : '#F2F2F4';
+    const wenZiSe = zhuTi === 'dark' ? '#BBBBc4' : '#1A1A2E';
+    const xuanchaSe = 'rgba(64, 158, 255, 0.3)';
+
+    rendition.book.spine.hooks.serialize.register((section: any) => {
+      try {
+        if (!section.html) return section.html;
+        const 注入样式 = `<style data-epub-early-bg>
+        html, body { background-color: ${beiJingSe} !important; background: ${beiJingSe} !important; color: ${wenZiSe} !important; }
+        ::selection { background-color: ${xuanchaSe} !important; }
+      </style>`;
+        if (section.html.includes('<head>')) {
+          section.html = section.html.replace('<head>', `<head>${注入样式}`);
+        } else if (section.html.includes('<html>')) {
+          section.html = section.html.replace('<html>', `<html><head>${注入样式}</head>`);
+        }
+        return section.html;
+      } catch (e) {
+        return section.html;
+      }
+    });
+
     rendition.on("selected", (cfiRange: string, contents: Contents) => {
-      if (!huaCiKaiQi) return;
+      if (!huaCiKaiQiRef.current) return;
       const selection = contents.window.getSelection();
       if (!selection || selection.isCollapsed) return;
       const selectedText = selection.toString().trim();
@@ -80,8 +127,7 @@ export function useEPUBReaderShiJian({
         let endOffset = range.endOffset;
         
         if (startContainer === endContainer && startContainer.nodeType === Node.TEXT_NODE) {
-          endOffset = Math.max(startOffset + 1, endOffset - 1);
-          console.log('调整 endOffset:', range.endOffset, '->', endOffset);
+          console.log('同文本节点选择 - startOffset:', startOffset, 'endOffset:', endOffset);
         }
         
         function getTextNodePath(node: Node, doc: Document): string {
@@ -173,31 +219,70 @@ export function useEPUBReaderShiJian({
       console.log('selected 事件 - 选中文本:', selectedText);
       console.log('selected 事件 - CFI:', accurateCfiRange);
       setSelectedText(selectedText);
-      setShowMenu(true);
-      contents.window.getSelection().removeAllRanges();
+      if (xuanZeTimerRef.current) {
+        clearTimeout(xuanZeTimerRef.current);
+      }
+      if (selectedText.length < ZUI_XIAO_WEN_ZI_SHU) {
+        contents.window.getSelection().removeAllRanges();
+        return;
+      }
+      xuanZeTimerRef.current = setTimeout(() => {
+        const currentSelection = contents.window.getSelection();
+        if (!currentSelection || currentSelection.isCollapsed) return;
+        const rend = fanYeHeYeMa.renditionRef.current;
+        if (rend && accurateCfiRange) {
+          try {
+            rend.annotations.add('temp-selection', accurateCfiRange, {}, () => {}, 'temp-hl', { fill: 'transparent', 'fill-opacity': '0', stroke: '#000000', 'stroke-width': '1px', 'stroke-dasharray': '3,2' });
+            linshiBiaoZhuCfiRef.current = accurateCfiRange;
+          } catch (e) { console.log('临时标注创建失败:', e); }
+        }
+        setShowMenu(true);
+        xuanZeTimerRef.current = null;
+      }, XUAN_ZE_YAN_CHI_MS);
     });
     
     rendition.hooks.content.register((contents: Contents) => {
       contentsRef.current = contents;
-      
-      contents.window.addEventListener('mousedown', () => {
-        setTimeout(handleHidePopup, 10);
-      });
+      if (!contents.window?.document?.head) return () => {};
 
-      const style = contents.window.document.createElement('style');
-      style.textContent = `
-        ::selection {
-          background-color: rgba(64, 158, 255, 0.3) !important;
-        }
-        ::-moz-selection {
-          background-color: rgba(64, 158, 255, 0.3) !important;
-        }
+      const beiJingSe = zhuTi === 'dark' ? '#222228' : '#F2F2F4';
+      const wenZiSe = zhuTi === 'dark' ? '#BBBBc4' : '#1A1A2E';
+
+      const baseStyle = contents.window.document.createElement('style');
+      baseStyle.setAttribute('data-epub-base-bg', '');
+      baseStyle.textContent = `
+        html, body { background-color: ${beiJingSe} !important; background: ${beiJingSe} !important; color: ${wenZiSe} !important; }
+        ::selection { background-color: rgba(64, 158, 255, 0.3) !important; }
+        ::-moz-selection { background-color: rgba(64, 158, 255, 0.3) !important; }
+        .epub-container svg.epubjs-hl { fill: transparent !important; }
+        .epub-container svg.epubjs-hl rect { fill: transparent !important; stroke-width: 1px !important; }
+        .hl-yellow { border-bottom: 1px dashed #000000 !important; padding-bottom: 2px !important; background: none !important; }
+        .hl-green { border-bottom: 1px dashed #000000 !important; padding-bottom: 2px !important; background: none !important; }
+        .hl-blue { border-bottom: 1px dashed #000000 !important; padding-bottom: 2px !important; background: none !important; }
+        .hl-pink { border-bottom: 1px dashed #000000 !important; padding-bottom: 2px !important; background: none !important; }
+        .temp-hl { border-bottom: 1px dashed #000000 !important; padding-bottom: 2px !important; background: none !important; }
       `;
-      contents.window.document.head.appendChild(style);
+      contents.window.document.head.insertBefore(baseStyle, contents.window.document.head.firstChild);
+
+      function handleIframeClick() {
+        if (!showMenuRef.current) return;
+        const rend = fanYeHeYeMa.renditionRef.current;
+        if (rend && linshiBiaoZhuCfiRef.current) {
+          try { rend.annotations.remove(linshiBiaoZhuCfiRef.current, 'temp-selection'); } catch {}
+          linshiBiaoZhuCfiRef.current = null;
+        }
+        setShowMenu(false);
+        setSelectedText('');
+        setSelectionRect(null);
+        setCurrentCfiRange(null);
+      }
+
+      contents.window.addEventListener('click', handleIframeClick);
 
       return () => {
-        contents.window.removeEventListener('mousedown', handleHidePopup);
-        contents.window.document.head.removeChild(style);
+        contents.window.removeEventListener('click', handleIframeClick);
+        const oldBase = contents.window.document.querySelector('style[data-epub-base-bg]');
+        if (oldBase) oldBase.remove();
       };
     });
     rendition.on('rendered', () => {
@@ -234,7 +319,9 @@ export function useEPUBReaderShiJian({
   }, [fanYeHeYeMa]);
 
   return {
-    renditionRef: fanYeHeYeMa.renditionRef, handleRendition,
+    renditionRef: fanYeHeYeMa.renditionRef,
+    renditionJiuXu: fanYeHeYeMa.renditionJiuXu,
+    handleRendition,
     handleNextPage: fanYeHeYeMa.handleNextPage, handlePrevPage: fanYeHeYeMa.handlePrevPage,
     handleShangYiGeSouSuoJieGuo: fanYeHeYeMa.handleShangYiGeSouSuoJieGuo,
     handleXiaYiGeSouSuoJieGuo: fanYeHeYeMa.handleXiaYiGeSouSuoJieGuo,

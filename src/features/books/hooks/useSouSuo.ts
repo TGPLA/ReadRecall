@@ -15,10 +15,11 @@ export function useSouSuo() {
   const [dangQianJieGuoSuoYin, setDangQianJieGuoSuoYin] = useState(0);
   const [shangCiJieGuo, setShangCiJieGuo] = useState<SouSuoJieGuo[]>([]);
 
-  const qingChuGaoLiang = useCallback((rendition: Rendition) => {
+  const qingChuHuaXian = useCallback((rendition: Rendition) => {
     shangCiJieGuo.forEach((jieGuo) => {
       rendition.annotations?.remove(jieGuo.cfi, 'highlight');
     });
+    setShangCiJieGuo([]);
   }, [shangCiJieGuo]);
 
   const gaoLiangSouSuoJieGuo = useCallback((rendition: Rendition, jieGuo: SouSuoJieGuo[]) => {
@@ -53,13 +54,13 @@ export function useSouSuo() {
 
   const chuLiSouSuoJieGuo = useCallback((jieGuo: SouSuoJieGuo[], rendition?: Rendition) => {
     if (rendition) {
-      qingChuGaoLiang(rendition);
+      qingChuHuaXian(rendition);
       gaoLiangSouSuoJieGuo(rendition, jieGuo);
     }
     setShangCiJieGuo(jieGuo);
     setSouSuoJieGuo(jieGuo);
     setDangQianJieGuoSuoYin(0);
-  }, [qingChuGaoLiang, gaoLiangSouSuoJieGuo]);
+  }, [qingChuHuaXian, gaoLiangSouSuoJieGuo]);
 
   return {
     souSuoCi,

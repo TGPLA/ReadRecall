@@ -20,10 +20,15 @@ export function useEPUBReaderHuoChuLi({
   const [selectedText, setSelectedText] = useState('');
   const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
   const [currentCfiRange, setCurrentCfiRange] = useState<string | null>(null);
+  const [huaCiKaiQi, setHuaCiKaiQi] = useState(true);
 
   const handleShowMenu = useCallback((show: boolean) => {
     setShowMenu(show);
     if (!show) {
+      const rendition = renditionRef.current;
+      if (rendition && currentCfiRange) {
+        try { rendition.annotations.remove(currentCfiRange, 'temp-selection'); } catch {}
+      }
       setSelectedText('');
       setSelectionRect(null);
       setCurrentCfiRange(null);
@@ -34,8 +39,23 @@ export function useEPUBReaderHuoChuLi({
     return currentCfiRange;
   }, [currentCfiRange]);
 
+  const jiChu = useEPUBReaderJiChuHuo({ 
+    bookId, 
+    chapterId, 
+    onParagraphCreated, 
+    renditionRef: undefined as any, 
+    bookRef: undefined as any,
+    showMenu,
+    setSelectedText,
+    setShowMenu: handleShowMenu,
+    setSelectionRect,
+    setCurrentCfiRange,
+    getCurrentCfiRange,
+  });
+
   const {
     renditionRef,
+    renditionJiuXu,
     handleRendition,
     handleNextPage,
     handlePrevPage,
@@ -45,15 +65,15 @@ export function useEPUBReaderHuoChuLi({
     handleSouSuoJieGuo,
     bookRef,
   } = useEPUBReaderShiJian({
-    yingYongZhuTi: undefined,
-    zhuTi: 'light',
+    yingYongZhuTi: jiChu.yingYongZhuTi,
+    zhuTi: jiChu.zhuTi,
     ziTiDaXiao: 100,
     setYeMaXinXi: () => {},
     setLocation: () => {},
     chuLiSouSuoJieGuo: () => {},
     tiaoDaoShangYiGe: () => undefined,
     tiaoDaoXiaYiGe: () => undefined,
-    huaCiKaiQi: true,
+    huaCiKaiQi,
     showMenu: showMenu,
     setSelectedText: setSelectedText,
     setShowMenu: handleShowMenu,
@@ -61,24 +81,11 @@ export function useEPUBReaderHuoChuLi({
     setCurrentCfiRange: setCurrentCfiRange,
   });
 
-  const jiChu = useEPUBReaderJiChuHuo({ 
-    bookId, 
-    chapterId, 
-    onParagraphCreated, 
-    renditionRef, 
-    bookRef,
-    showMenu,
-    setSelectedText,
-    setShowMenu: handleShowMenu,
-    setSelectionRect,
-    setCurrentCfiRange,
-    getCurrentCfiRange,
-  });
-
   return {
     location: jiChu.location,
     zhuTi: jiChu.zhuTi,
     setZhuTi: jiChu.setZhuTi,
+    qieHuanZhuTi: jiChu.qieHuanZhuTi,
     souSuoCi: jiChu.souSuoCi,
     setSouSuoCi: jiChu.setSouSuoCi,
     souSuoJieGuo: jiChu.souSuoJieGuo,
@@ -93,15 +100,17 @@ export function useEPUBReaderHuoChuLi({
     showMenu: showMenu,
     selectionRect: selectionRect,
     generating: jiChu.generating,
-    highlights: jiChu.highlights,
-    handleDeleteHighlight: jiChu.handleDeleteHighlight,
-    huaCiKaiQi: jiChu.huaCiKaiQi,
-    setHuaCiKaiQi: jiChu.setHuaCiKaiQi,
+    highlights: jiChu.huaXianList,
+    huaXianList: jiChu.huaXianList,
+    huaCiKaiQi,
+    setHuaCiKaiQi,
     handleCancel: jiChu.handleCancel,
     handleGenerateQuestion: jiChu.handleGenerateQuestion,
-    handleHighlight: jiChu.handleHighlight,
+    handleHighlight: jiChu.handleHuaXian,
+    handleDeleteHighlight: jiChu.handleDeleteHuaXian,
     handleCopy: jiChu.handleCopy,
     renditionRef,
+    renditionJiuXu,
     handleRendition,
     handleNextPage,
     handlePrevPage,

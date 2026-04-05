@@ -1,5 +1,5 @@
 // @审计已完成
-// EPUB 阅读器弹窗 - 全屏阅读器弹窗
+// EPUB 阅读器弹窗 - 全屏沉浸式阅读器（无白边无边框）
 
 import React from 'react';
 import { createPortal } from 'react-dom';
@@ -19,20 +19,8 @@ export function EPUBReaderModal({ isOpen, url, darkMode, bookId, chapterId, onCl
   if (!isOpen) return null;
 
   return createPortal(
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 1000,
-      backgroundColor: darkMode ? '#111827' : '#ffffff'
-    }}>
-      <EPUBReader 
-        url={url} 
-        darkMode={darkMode} 
-        onClose={onClose}
-        bookId={bookId}
-        chapterId={chapterId}
-        onParagraphCreated={onParagraphCreated}
-      />
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000 }}>
+      <EPUBReader url={url} darkMode={darkMode} onClose={onClose} bookId={bookId} chapterId={chapterId} onParagraphCreated={onParagraphCreated} />
     </div>,
     document.body
   );

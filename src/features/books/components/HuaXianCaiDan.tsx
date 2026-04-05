@@ -2,40 +2,33 @@
 // 划线多功能菜单组件 - 微信读书风格
 
 import { useState, useRef, useEffect } from 'react';
-import type { ChuTiLeiXing, GaoLiangYanSe } from '../hooks/useHuaXianChuTi';
+import type { ChuTiLeiXing, HuaXianYanSe } from '../hooks/useHuaXianChuTi';
 
 interface HuaXianCaiDanProps {
   selectedText: string;
   position: { top: number; left: number };
+  showMenu: boolean;
   generating: boolean;
+  darkMode?: boolean;
   onGenerateQuestion: (text: string, type: ChuTiLeiXing) => void;
-  onHighlight: (text: string, yanSe: GaoLiangYanSe, beiZhu: string) => void;
+  onHuaXian: (text: string, yanSe: HuaXianYanSe, beiZhu: string) => void;
   onCopy: (text: string) => void;
   onCancel: () => void;
 }
-
-const CHU_TI_LEI_XING: ChuTiLeiXing[] = ['名词解释', '意图理解', '生活应用'];
-
-const YAN_SE_XUAN_XIANG: { value: GaoLiangYanSe; label: string; color: string }[] = [
-  { value: 'yellow', label: '黄色', color: '#fef08a' },
-  { value: 'green', label: '绿色', color: '#86efac' },
-  { value: 'blue', label: '蓝色', color: '#93c5fd' },
-  { value: 'pink', label: '粉色', color: '#f9a8d4' },
-];
 
 export function HuaXianCaiDan({
   selectedText,
   position,
   generating,
+  darkMode,
   onGenerateQuestion,
-  onHighlight,
+  onHuaXian,
   onCopy,
   onCancel,
 }: HuaXianCaiDanProps) {
   const [showSubMenu, setShowSubMenu] = useState(false);
-  const [yanSe, setYanSe] = useState<GaoLiangYanSe>('yellow');
+  const [yanSe] = useState<HuaXianYanSe>('yellow');
   const [beiZhu, setBeiZhu] = useState('');
-  const [showColorPicker, setShowColorPicker] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,8 +37,8 @@ export function HuaXianCaiDan({
         onCancel();
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, [onCancel]);
 
   const menuStyle: React.CSSProperties = {
@@ -71,8 +64,8 @@ export function HuaXianCaiDan({
     transition: 'all 0.2s',
   };
 
-  const handleHighlightClick = () => {
-    onHighlight(selectedText, yanSe, beiZhu);
+  const handleHuaXianClick = () => {
+    onHuaXian(selectedText, yanSe, beiZhu);
     setBeiZhu('');
   };
 
@@ -117,39 +110,23 @@ export function HuaXianCaiDan({
           </button>
 
           <button
-            onClick={() => setShowColorPicker(!showColorPicker)}
+            onClick={handleHuaXianClick}
             style={{
               ...buttonStyle,
             }}
           >
-            <div style={{ width: '1.25rem', height: '1.25rem', borderRadius: '0.25rem', backgroundColor: YAN_SE_XUAN_XIANG.find(y => y.value === yanSe)?.color || '#fef08a' }} />
-            高亮
+            <div style={{ 
+              width: '1.25rem', 
+              height: '1.25rem', 
+              borderRadius: '0.25rem', 
+              backgroundColor: '#000000',
+              border: `2px solid ${darkMode ? '#ffffff' : '#000000'}`
+            }} />
+            划线
           </button>
         </div>
 
-        {showColorPicker && (
-          <div style={{ padding: '0.5rem', borderTop: '1px solid #444444', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            {YAN_SE_XUAN_XIANG.map(xuanXiang => (
-              <button
-                key={xuanXiang.value}
-                onClick={() => { setYanSe(xuanXiang.value); setShowColorPicker(false); }}
-                style={{
-                  width: '1.5rem',
-                  height: '1.5rem',
-                  borderRadius: '0.25rem',
-                  border: yanSe === xuanXiang.value ? '2px solid #ffffff' : '2px solid transparent',
-                  backgroundColor: xuanXiang.color,
-                  cursor: 'pointer',
-                  padding: 0,
-                }}
-                title={xuanXiang.label}
-              />
-            ))}
-          </div>
-        )}
-
-        {showColorPicker && (
-          <div style={{ padding: '0.5rem', borderTop: '1px solid #444444' }}>
+        <div style={{ padding: '0.5rem', borderTop: '1px solid #444444' }}>
             <input
               type="text"
               value={beiZhu}
@@ -166,7 +143,7 @@ export function HuaXianCaiDan({
               }}
             />
             <button
-              onClick={handleHighlightClick}
+              onClick={handleHuaXianClick}
               style={{
                 width: '100%',
                 marginTop: '0.5rem',
@@ -179,25 +156,24 @@ export function HuaXianCaiDan({
                 fontSize: '0.75rem',
               }}
             >
-              保存高亮
+              保存划线
             </button>
           </div>
-        )}
-      </div>
 
-      <div style={{
-        position: 'absolute',
-        left: '50%',
-        bottom: '-8px',
-        transform: 'translateX(-50%)',
-        width: 0,
-        height: 0,
-        borderLeft: '8px solid transparent',
-        borderRight: '8px solid transparent',
-        borderTop: '8px solid #333333',
-      }} />
+          <div style={{
+            position: 'absolute',
+            left: '50%',
+            bottom: '-8px',
+            transform: 'translateX(-50%)',
+            width: 0,
+            height: 0,
+            borderLeft: '8px solid transparent',
+            borderRight: '8px solid transparent',
+            borderTop: '8px solid #333333',
+          }} />
+        </div>
 
-      {showSubMenu && (
+        {showSubMenu && (
         <div style={{
           position: 'absolute',
           top: '100%',

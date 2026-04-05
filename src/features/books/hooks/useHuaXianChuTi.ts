@@ -1,5 +1,5 @@
 // @审计已完成
-// 划线出题 Hook - AI出题、高亮标记、复制文字
+// 划线出题 Hook - AI出题、划线标记、复制文字
 
 import { useState, useCallback, useEffect } from 'react';
 import useLocalStorageState from 'use-local-storage-state';
@@ -9,13 +9,13 @@ import { showError, showSuccess } from '@shared/utils/common/ToastTiShi';
 
 export type ChuTiLeiXing = '名词解释' | '意图理解' | '生活应用';
 
-export type GaoLiangYanSe = 'yellow' | 'green' | 'blue' | 'pink';
+export type HuaXianYanSe = 'yellow' | 'green' | 'blue' | 'pink';
 
-export interface GaoLiangXinXi {
+export interface HuaXianXinXi {
   id: string;
   text: string;
   cfiRange: string;
-  yanSe: GaoLiangYanSe;
+  yanSe: HuaXianYanSe;
   beiZhu: string;
   createdAt: number;
 }
@@ -45,35 +45,41 @@ export function useHuaXianChuTi({
   huaCiJiaoHuRef,
 }: UseHuaXianChuTiProps) {
   const [generating, setGenerating] = useState(false);
-  const storageKey = `gaoliang_${userId}_${bookId}_${chapterId}`;
-  const [highlights, setHighlights] = useLocalStorageState<GaoLiangXinXi[]>(storageKey, { defaultValue: [] });
+  const storageKey = `huaxian_${userId}_${bookId}_${chapterId}`;
+  const [huaXianList, setHuaXianList] = useLocalStorageState<HuaXianXinXi[]>(storageKey, { defaultValue: [] });
 
-  const yingYongGaoLiang = useCallback(async (cfiRange: string, qingChuJiuGaoLiang: boolean = false, yanSe: GaoLiangYanSe = 'yellow') => {
+  const yingYongHuaXian = useCallback(async (cfiRange: string, qingChuJiuHuaXian: boolean = false, yanSe: HuaXianYanSe = 'yellow') => {
     const rendition = renditionRef?.current;
     if (!rendition) {
-      console.error('应用高亮失败: rendition 不存在');
+      console.error('应用划线失败: rendition 不存在');
       return;
     }
     try {
-      if (qingChuJiuGaoLiang) {
-        console.log('清除所有旧高亮');
+      if (qingChuJiuHuaXian) {
+        console.log('清除所有旧划线');
         rendition.annotations.remove('highlight');
       }
-      console.log('尝试应用高亮, cfiRange:', cfiRange);
+      console.log('尝试应用划线, cfiRange:', cfiRange);
       
-      const colorMap: Record<GaoLiangYanSe, string> = {
-        yellow: '#fef08a',
-        green: '#86efac',
-        blue: '#93c5fd',
-        pink: '#f9a8d4',
+      const classMap: Record<HuaXianYanSe, string> = {
+        yellow: 'hl-yellow',
+        green: 'hl-green',
+        blue: 'hl-blue',
+        pink: 'hl-pink',
+      };
+      const styleMap: Record<HuaXianYanSe, { fill: string; 'fill-opacity': string; stroke: string; 'stroke-width': string; 'stroke-dasharray': string }> = {
+        yellow: { 'fill': 'transparent', 'fill-opacity': '0', stroke: '#000000', 'stroke-width': '1px', 'stroke-dasharray': '3,2' },
+        green: { 'fill': 'transparent', 'fill-opacity': '0', stroke: '#000000', 'stroke-width': '1px', 'stroke-dasharray': '3,2' },
+        blue: { 'fill': 'transparent', 'fill-opacity': '0', stroke: '#000000', 'stroke-width': '1px', 'stroke-dasharray': '3,2' },
+        pink: { 'fill': 'transparent', 'fill-opacity': '0', stroke: '#000000', 'stroke-width': '1px', 'stroke-dasharray': '3,2' },
       };
       
-      rendition.annotations.highlight(cfiRange, { fill: colorMap[yanSe] }, () => {
-        console.log('高亮点击回调');
-      });
-      console.log('高亮应用成功');
+      rendition.annotations.add('highlight', cfiRange, {}, () => {
+        console.log('划线点击回调');
+      }, classMap[yanSe], styleMap[yanSe]);
+      console.log('划线应用成功');
     } catch (error) {
-      console.error('应用高亮失败:', error);
+      console.error('应用划线失败:', error);
     }
   }, [renditionRef]);
 
@@ -93,38 +99,49 @@ export function useHuaXianChuTi({
     setupRenditionListener(rendition);
     
     function setupRenditionListener(r: typeof rendition) {
-      const colorMap: Record<GaoLiangYanSe, string> = {
-        yellow: '#fef08a',
-        green: '#86efac',
-        blue: '#93c5fd',
-        pink: '#f9a8d4',
+      const classMap: Record<HuaXianYanSe, string> = {
+        yellow: 'hl-yellow',
+        green: 'hl-green',
+        blue: 'hl-blue',
+        pink: 'hl-pink',
+      };
+      const styleMap: Record<HuaXianYanSe, { fill: string; 'fill-opacity': string; stroke: string; 'stroke-width': string; 'stroke-dasharray': string }> = {
+        yellow: { 'fill': 'transparent', 'fill-opacity': '0', stroke: '#000000', 'stroke-width': '1px', 'stroke-dasharray': '3,2' },
+        green: { 'fill': 'transparent', 'fill-opacity': '0', stroke: '#000000', 'stroke-width': '1px', 'stroke-dasharray': '3,2' },
+        blue: { 'fill': 'transparent', 'fill-opacity': '0', stroke: '#000000', 'stroke-width': '1px', 'stroke-dasharray': '3,2' },
+        pink: { 'fill': 'transparent', 'fill-opacity': '0', stroke: '#000000', 'stroke-width': '1px', 'stroke-dasharray': '3,2' },
       };
       
-      const applyHighlights = () => {
+      const applyHuaXian = () => {
         const currentRendition = renditionRef?.current;
         if (!currentRendition) return;
         
         currentRendition.annotations.remove('highlight');
         
-        const currentHighlights = JSON.parse(localStorage.getItem(`gaoliang_${userId}_${bookId}_${chapterId}`) || '[]');
-        
-        if (currentHighlights.length === 0) return;
-        
-        currentHighlights.forEach((h: GaoLiangXinXi) => {
+        const currentHuaXian = JSON.parse(localStorage.getItem(`huaxian_${userId}_${bookId}_${chapterId}`) || '[]');
+
+        if (currentHuaXian.length === 0) return;
+
+        const quChongHuaXian = currentHuaXian.filter((h: HuaXianXinXi, index: number, self: HuaXianXinXi[]) =>
+          index === self.findIndex(item => item.cfiRange === h.cfiRange)
+        );
+
+        quChongHuaXian.forEach((h: HuaXianXinXi) => {
           if (!h.cfiRange) return;
           try {
-            const fill = colorMap[h.yanSe] || colorMap.yellow;
-            currentRendition.annotations.highlight(h.cfiRange, { fill }, () => {});
+            const cls = classMap[h.yanSe] || classMap.yellow;
+            const sty = styleMap[h.yanSe] || styleMap.yellow;
+            currentRendition.annotations.add('highlight', h.cfiRange, {}, () => {}, cls, sty);
           } catch (error) {
-            console.error('渲染高亮失败:', error);
+            console.error('渲染划线失败:', error);
           }
         });
       };
       
-      r.on('rendered', applyHighlights);
-      applyHighlights();
+      r.on('rendered', applyHuaXian);
+      applyHuaXian();
       
-      return () => r.off('rendered', applyHighlights);
+      return () => r.off('rendered', applyHuaXian);
     }
   }, [userId, bookId, chapterId]);
 
@@ -145,43 +162,44 @@ export function useHuaXianChuTi({
     }
   }, [chapterId, onClose]);
 
-  const handleHighlight = useCallback((selectedText: string, yanSe: GaoLiangYanSe = 'yellow', beiZhu: string = '') => {
+  const handleHuaXian = useCallback((selectedText: string, yanSe: HuaXianYanSe = 'yellow', beiZhu: string = '') => {
     const cfiRange = huaCiJiaoHuRef?.getCurrentCfiRange?.() || '';
-    console.log('handleHighlight - 选中文本:', selectedText);
-    console.log('handleHighlight - CFI:', cfiRange);
-    const gaoLiangXinXi: GaoLiangXinXi = {
-      id: Date.now().toString(),
-      text: selectedText,
-      cfiRange: cfiRange || '',
-      yanSe,
-      beiZhu,
-      createdAt: Date.now(),
-    };
-    setHighlights([...highlights, gaoLiangXinXi]);
+    console.log('handleHuaXian - 选中文本:', selectedText);
+    console.log('handleHuaXian - CFI:', cfiRange);
+
+    const cunZaiHuaXian = huaXianList.find(h => h.cfiRange === cfiRange);
+    if (cunZaiHuaXian) {
+      showError('该文本已划线，请先删除后再重新标记');
+      onClose();
+      return;
+    }
+
+    const huaXianXinXi: HuaXianXinXi = { id: Date.now().toString(), text: selectedText, cfiRange: cfiRange || '', yanSe, beiZhu, createdAt: Date.now() };
+    setHuaXianList([...huaXianList, huaXianXinXi]);
     if (cfiRange) {
-      yingYongGaoLiang(cfiRange, false, yanSe);
+      yingYongHuaXian(cfiRange, false, yanSe);
     }
     huaCiJiaoHuRef?.setCurrentCfiRange?.(null);
-    showSuccess('已添加高亮标记');
+    showSuccess('已添加划线');
     onClose();
-  }, [onClose, yingYongGaoLiang, huaCiJiaoHuRef, highlights]);
+  }, [onClose, yingYongHuaXian, huaCiJiaoHuRef, huaXianList]);
 
-  const handleDeleteHighlight = useCallback((id: string) => {
-    const deletedHighlight = highlights.find(h => h.id === id);
+  const handleDeleteHuaXian = useCallback((id: string) => {
+    const deletedHuaXian = huaXianList.find(h => h.id === id);
     
     const rendition = renditionRef?.current;
-    console.log('删除高亮 - rendition:', !!rendition, 'cfiRange:', deletedHighlight?.cfiRange);
+    console.log('删除划线 - rendition:', !!rendition, 'cfiRange:', deletedHuaXian?.cfiRange);
 
-    if (rendition && deletedHighlight?.cfiRange) {
+    if (rendition && deletedHuaXian?.cfiRange) {
       try {
-        rendition.annotations.remove(deletedHighlight.cfiRange, 'highlight');
+        rendition.annotations.remove(deletedHuaXian.cfiRange, 'highlight');
       } catch (error) {
-        console.error('清除高亮失败:', error);
+        console.error('清除划线失败:', error);
       }
     }
 
-    setHighlights(prev => prev.filter(h => h.id !== id));
-    showSuccess('已删除高亮');
+    setHuaXianList(prev => prev.filter(h => h.id !== id));
+    showSuccess('已删除划线');
 
     setTimeout(() => {
       const currentLocation = rendition?.location?.start?.cfi;
@@ -198,7 +216,7 @@ export function useHuaXianChuTi({
         });
       }
     }, 150);
-  }, [highlights, renditionRef]);
+  }, [huaXianList, renditionRef]);
 
   const handleCopy = useCallback(async (selectedText: string) => {
     try {
@@ -212,10 +230,10 @@ export function useHuaXianChuTi({
 
   return {
     generating,
-    highlights,
+    huaXianList,
     handleGenerateQuestion,
-    handleHighlight,
-    handleDeleteHighlight,
+    handleHuaXian,
+    handleDeleteHuaXian,
     handleCopy,
   };
 }

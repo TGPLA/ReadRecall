@@ -1,7 +1,7 @@
 // @审计已完成
 // EPUB 阅读器翻页和页码 Hook
 
-import { useRef, useCallback } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import type { Rendition, NavItem } from 'epubjs';
 
 interface UseEPUBReaderFanYeHeYeMaProps {
@@ -19,6 +19,7 @@ export function useEPUBReaderFanYeHeYeMa({
 }: UseEPUBReaderFanYeHeYeMaProps) {
   const renditionRef = useRef<Rendition | undefined>(undefined);
   const tocRef = useRef<NavItem[]>([]);
+  const [renditionJiuXu, setRenditionJiuXu] = useState(false);
 
   const gengXinYeMaXinXi = useCallback(() => {
     if (renditionRef.current && tocRef.current.length > 0) {
@@ -74,6 +75,8 @@ export function useEPUBReaderFanYeHeYeMa({
 
   return {
     renditionRef,
+    renditionJiuXu,
+    setRenditionJiuXu,
     tocRef,
     gengXinYeMaXinXi,
     handleNextPage,

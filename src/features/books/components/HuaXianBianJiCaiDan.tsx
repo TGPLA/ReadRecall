@@ -32,11 +32,25 @@ export function HuaXianBianJiCaiDan({
 
   useEffect(() => {
     if (!show) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
+    
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        requestAnimationFrame(() => onClose());
+      }
     };
-    const t = setTimeout(() => document.addEventListener('mousedown', handler), 150);
-    return () => { clearTimeout(t); document.removeEventListener('mousedown', handler); };
+    
+    document.addEventListener('mousedown', handleClickOutside, true);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [show, onClose]);
+
+  useEffect(() => {
+    if (!show) return;
+    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [show, onClose]);
 
   if (!show || !position) return null;
@@ -49,7 +63,6 @@ export function HuaXianBianJiCaiDan({
     zIndex: 9999,
     opacity: visible ? 1 : 0,
     transition: 'all 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
-    pointerEvents: show ? 'auto' : 'none',
   };
 
   const containerStyle: React.CSSProperties = {
@@ -79,13 +92,13 @@ export function HuaXianBianJiCaiDan({
     <div ref={menuRef} style={menuStyle}>
       <div style={containerStyle}>
         <div style={rowStyle}>
-          <button onClick={onDelete} title="删除划线"
+          <button onClick={(e) => { e.stopPropagation(); onDelete(); }} title="删除划线"
             style={btnStyle} onMouseEnter={e => e.currentTarget.style.backgroundColor='#ef4444'}
             onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
             <Trash2 size={14} /><span>删除</span>
           </button>
           <div style={{ width: '1px', height: '1.2rem', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-          <button onClick={onCopy} title="复制文字"
+          <button onClick={(e) => { e.stopPropagation(); onCopy(); }} title="复制文字"
             style={btnStyle} onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(96,165,250,0.25)'}
             onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
             <Copy size={14} /><span>复制</span>
@@ -95,7 +108,7 @@ export function HuaXianBianJiCaiDan({
         <div style={{ ...rowStyle, justifyContent: 'center', paddingTop: '0.2rem' }}>
           {YAN_SE_XUAN_XIANG.map(opt => (
             <button key={opt.value} title={`切换为${opt.color}`}
-              onClick={() => onChangeYanSe(opt.value)}
+              onClick={(e) => { e.stopPropagation(); onChangeYanSe(opt.value); }}
               style={{ ...dotStyle(currentYanSe === opt.value), backgroundColor: opt.color }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.2)'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}

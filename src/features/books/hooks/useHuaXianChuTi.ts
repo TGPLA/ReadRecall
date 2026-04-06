@@ -206,17 +206,17 @@ export function useHuaXianChuTi({
     const rendition = renditionRef?.current;
     if (rendition && deleted?.cfiRange) {
       try { rendition.annotations.remove(deleted.cfiRange, 'highlight'); } catch (error) { console.error('清除标记失败:', error); }
+      const span = rendition.getContents()?.[0]?.window?.document?.querySelector(`[data-huaxian-id="${id}"]`);
+      if (span) {
+        const parent = span.parentNode;
+        if (parent) {
+          while (span.firstChild) parent.insertBefore(span.firstChild, span);
+          parent.removeChild(span);
+        }
+      }
     }
     setHuaXianList(prev => prev.filter(h => h.id !== id));
     showSuccess('已删除标记');
-    setTimeout(() => {
-      const loc = rendition?.location?.start?.cfi;
-      if (loc && rendition) {
-        const mgr = (rendition as any).manager;
-        if (mgr && mgr.clear) mgr.clear();
-        rendition.display(loc).then(() => {}).catch(err => console.error('重新渲染失败:', err));
-      }
-    }, 150);
   }, [huaXianList, renditionRef]);
 
   const handleChangeYanSe = useCallback((id: string, yanSe: HuaXianYanSe) => {
@@ -224,13 +224,13 @@ export function useHuaXianChuTi({
     if (!target) return;
     const rendition = renditionRef?.current;
     if (rendition && target.cfiRange) {
-      try { rendition.annotations.remove(target.cfiRange, 'highlight'); } catch {}
       const se = YAN_SE_PEI_ZHI[yanSe];
       const cls = target.leiXing === 'marker' ? MK_CLASS_MAP[yanSe] : HL_CLASS_MAP[yanSe];
-      const svgStyle = { fill: se, 'fill-opacity': target.leiXing === 'marker' ? '0.25' : '0', stroke: se, 'stroke-width': '0', 'stroke-dasharray': 'none' };
-      rendition.annotations.add('highlight', target.cfiRange, {}, () => {}, cls, svgStyle);
       const span = rendition.getContents()?.[0]?.window?.document?.querySelector(`[data-huaxian-id="${id}"]`);
-      if (span) { span.className = cls; span.setAttribute('data-biaoji', 'true'); }
+      if (span) {
+        span.className = cls;
+        span.setAttribute('data-biaoji', 'true');
+      }
     }
     setHuaXianList(prev => prev.map(h => h.id === id ? { ...h, yanSe } : h));
   }, [huaXianList, renditionRef]);

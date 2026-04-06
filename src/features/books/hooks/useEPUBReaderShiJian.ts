@@ -313,11 +313,14 @@ export function useEPUBReaderShiJian({
         }
         function handleClick(e){
           var t=e.target.closest('[data-biaoji]');
-          if(!t)return;
-          e.preventDefault();
-          e.stopPropagation();
-          var cfi=t.getAttribute('data-cfi')||'',id=t.getAttribute('data-huaxian-id')||'',cls=t.className||'',txt=t.textContent||'',r=t.getBoundingClientRect();
-          window.parent.postMessage({type:'huaxian-click',cfi:cfi,id:id,className:cls,rect:{top:r.top,left:r.left,width:r.width,height:r.height},text:txt},'*')
+          if(t){
+            e.preventDefault();
+            e.stopPropagation();
+            var cfi=t.getAttribute('data-cfi')||'',id=t.getAttribute('data-huaxian-id')||'',cls=t.className||'',txt=t.textContent||'',r=t.getBoundingClientRect();
+            window.parent.postMessage({type:'huaxian-click',cfi:cfi,id:id,className:cls,rect:{top:r.top,left:r.left,width:r.width,height:r.height},text:txt},'*')
+          }else{
+            window.parent.postMessage({type:'close-edit-menu'},'*')
+          }
         }
         document.addEventListener('click',handleClick,true);
         window.addEventListener('message',function(e){

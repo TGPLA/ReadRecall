@@ -1,7 +1,7 @@
 // @审计已完成
 // 划线点击交互 Hook - 管理"点击已有划线→弹出编辑菜单"的全流程
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { HuaXianXinXi, HuaXianYanSe } from './useHuaXianChuTi';
 
 interface HuaXianDianJiXinXi {
@@ -38,11 +38,17 @@ export function useHuaXianDianJi({
   const [editPosition, setEditPosition] = useState<{ top: number; left: number } | null>(null);
   const [activeHuaXian, setActiveHuaXian] = useState<HuaXianXinXi | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const huaXianListRef = useRef(huaXianList);
+
+  useEffect(() => {
+    huaXianListRef.current = huaXianList;
+  }, [huaXianList]);
 
   const handleHuaXianDianJi = useCallback((xinXi: HuaXianDianJiXinXi) => {
-    let matched = huaXianList.find(h => h.id === xinXi.id);
-    if (!matched) matched = huaXianList.find(h => h.cfiRange === xinXi.cfi);
-    if (!matched) matched = huaXianList.find(h => xinXi.cfi.includes(h.cfiRange) || h.cfiRange.includes(xinXi.cfi));
+    const list = huaXianListRef.current;
+    let matched = list.find(h => String(h.id) === String(xinXi.id));
+    if (!matched) matched = list.find(h => String(h.cfiRange) === String(xinXi.cfi));
+    if (!matched) matched = list.find(h => String(xinXi.cfi).includes(String(h.cfiRange)) || String(h.cfiRange).includes(String(xinXi.cfi)));
     if (!matched) return;
 
     const rect = xinXi.rect;
@@ -61,7 +67,7 @@ export function useHuaXianDianJi({
     setActiveId(matched.id);
     setEditPosition({ top: menuTop, left: menuLeft });
     setShowEditMenu(true);
-  }, [huaXianList]);
+  }, []);
 
   const handleCloseEdit = useCallback(() => {
     setShowEditMenu(false);
@@ -95,10 +101,13 @@ export function useHuaXianDianJi({
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data && e.data.type === 'set-hl-active') setActiveId(e.data.id || null);
+      if (e.data && e.data.type === 'close-edit-menu' && showEditMenu) {
+        handleCloseEdit();
+      }
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, []);
+  }, [showEditMenu, handleCloseEdit]);
 
   return {
     showEditMenu, editPosition, activeHuaXian, activeId,

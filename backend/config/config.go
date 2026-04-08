@@ -153,9 +153,10 @@ func InitDB() {
 		}
 	}
 
-	log.Println("🔍 检查并执行数据库迁移 v5.0...")
+	log.Println("🔍 检查并执行数据库迁移...")
 	if DB != nil {
 		migrateV5()
+		AutoMigrate()
 	} else {
 		log.Println("⚠️  数据库未连接，跳过迁移")
 	}
@@ -193,6 +194,7 @@ func AutoMigrate() {
 		&models.Paragraph{},
 		&models.Concept{},
 		&models.ConceptPracticeRecord{},
+		&models.Annotation{},
 	); err != nil {
 		log.Fatal("❌ 数据库迁移失败:", err)
 	}

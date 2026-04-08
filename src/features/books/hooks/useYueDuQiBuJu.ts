@@ -15,7 +15,7 @@ export function useYueDuQiBuJu({ bookRef, highlights, handleDeleteHighlight }: U
   const [shuMing, setShuMing] = useState('加载中...');
   const [zuoZhe, setZuoZhe] = useState('');
   const [zhangJieLieBiao, setZhangJieLieBiao] = useState<NavItem[]>([]);
-  const [daKaiDeChouTi, setDaKaiDeChouTi] = useState<'mulu' | 'biji' | 'huaxian' | null>(null);
+  const [daKaiDeChouTi, setDaKaiDeChouTi] = useState<'mulu' | 'chazhao' | 'huaxian' | null>(null);
   const [yiHuoQuShuMing, setYiHuoQuShuMing] = useState(false);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export function useYueDuQiBuJu({ bookRef, highlights, handleDeleteHighlight }: U
   }, [bookRef.current, yiHuoQuShuMing]);
 
   const qieHuanChouTi = useCallback((leiXing: string) => {
-    setDaKaiDeChouTi(prev => prev === leiXing ? null : (leiXing as 'mulu' | 'biji' | 'huaxian'));
+    setDaKaiDeChouTi(prev => prev === leiXing ? null : (leiXing as 'mulu' | 'chazhao' | 'huaxian'));
   }, []);
 
   return {

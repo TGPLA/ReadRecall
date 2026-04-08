@@ -1,10 +1,8 @@
 // @审计已完成
 // EPUB 阅读器页面 - 全屏独立页面模式
 
-import { useState, useEffect } from 'react';
 import { EPUBReader } from './EPUBReader';
 import { databaseService } from '@shared/services/database';
-import { chapterService } from '@shared/services/chapterService';
 import type { Book } from '@infrastructure/types';
 
 interface EPUBReaderPageProps {
@@ -13,18 +11,6 @@ interface EPUBReaderPageProps {
 }
 
 export function EPUBReaderPage({ book, onClose }: EPUBReaderPageProps) {
-  const [defaultChapterId, setDefaultChapterId] = useState<string>('');
-
-  useEffect(() => {
-    const loadDefaultChapter = async () => {
-      const { chapters } = await chapterService.getChaptersByBook(book.id);
-      if (chapters.length > 0) {
-        setDefaultChapterId(chapters[0].id);
-      }
-    };
-    loadDefaultChapter();
-  }, [book.id]);
-
   const epubUrl = book.epubFilePath
     ? databaseService.getEPUBUrl(book.id, book.epubFilePath)
     : '';
@@ -46,7 +32,7 @@ export function EPUBReaderPage({ book, onClose }: EPUBReaderPageProps) {
       darkMode={false}
       onClose={onClose}
       bookId={book.id}
-      chapterId={defaultChapterId}
+      chapterId=""
     />
   );
 }

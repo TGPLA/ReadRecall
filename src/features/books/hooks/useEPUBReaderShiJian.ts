@@ -468,6 +468,9 @@ export function useEPUBReaderShiJian({
     rendition.on('relocated', () => {
       fanYeHeYeMa.gengXinYeMaXinXi();
     });
+    rendition.on('error', (error: any) => {
+      console.warn('epub.js 内部错误（已捕获）:', error?.message || error);
+    });
     if (yingYongZhuTi) {
       yingYongZhuTi(rendition, zhuTi);
     }

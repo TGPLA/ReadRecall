@@ -9,7 +9,7 @@ import { useHuaXianDianJi } from './useHuaXianDianJi';
 
 interface UseEPUBReaderHuoChuLiProps {
   bookId: string;
-  chapterId: string;
+  chapterId?: string;
   onParagraphCreated?: () => void;
 }
 

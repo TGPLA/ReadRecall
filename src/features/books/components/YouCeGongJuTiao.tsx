@@ -3,7 +3,7 @@
 
 import React, { useEffect, useCallback, useRef, useState } from 'react';
 
-type GongJuTiaoAnNiu = 'mulu' | 'biji' | 'zihao' | 'zhuti' | 'huaxian';
+type GongJuTiaoAnNiu = 'mulu' | 'chazhao' | 'zihao' | 'zhuti' | 'huaxian';
 
 const KE_PING_KUAN_DU = 1320;
 const GU_DING_PIAN_YI = -64;
@@ -18,7 +18,7 @@ interface YouCeGongJuTiaoProps {
 
 const TU_BIAO: Record<GongJuTiaoAnNiu, { path: string; viewBox: string; title: string }> = {
   mulu: { path: 'M4 6h16M4 12h16M4 18h16', viewBox: '0 0 24 24', title: '目录' },
-  biji: { path: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', viewBox: '0 0 24 24', title: '笔记' },
+  chazhao: { path: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', viewBox: '0 0 24 24', title: '查找' },
   zihao: { path: 'M4 6h16M4 10h16M4 14h16M4 18h10', viewBox: '0 0 24 24', title: '字号' },
   zhuti: { path: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z', viewBox: '0 0 24 24', title: '主题' },
   huaxian: { path: 'M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z', viewBox: '0 0 24 24', title: `划线` },
@@ -48,7 +48,7 @@ export function YouCeGongJuTiao({ dangQianDaKai, onAnNiuDianJi, huaXianShuLiang,
   }, [jiSuanWeiZhi]);
 
   const anNiuLieBiao: { key: GongJuTiaoAnNiu; badge?: number }[] = [
-    { key: 'mulu' }, { key: 'biji' }, { key: 'zihao' }, { key: 'zhuti' }, { key: 'huaxian', badge: huaXianShuLiang },
+    { key: 'mulu' }, { key: 'chazhao' }, { key: 'zihao' }, { key: 'zhuti' }, { key: 'huaxian', badge: huaXianShuLiang },
   ];
 
   return (

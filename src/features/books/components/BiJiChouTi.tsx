@@ -7,7 +7,7 @@ import type { HuaXianXinXi, HuaXianYanSe } from '../hooks/useHuaXianChuTi';
 interface BiJiChouTiProps {
   highlights: HuaXianXinXi[];
   onDelete: (id: string) => void;
-  onJump: (cfiRange: string) => void;
+  onJump: (huaXian: HuaXianXinXi) => void;
   onGuanBi: () => void;
 }
 
@@ -59,7 +59,7 @@ export function BiJiChouTi({ highlights, onDelete, onJump, onGuanBi }: BiJiChouT
           paiXuHouDeHuaXian.map(h => (
             <div
               key={h.id}
-              onClick={() => onJump(h.cfiRange)}
+              onClick={() => onJump(h)}
               style={{
                 padding: '0.85rem',
                 marginBottom: '0.6rem',

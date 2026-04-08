@@ -3,27 +3,17 @@
 // 划线渲染采用双轨制：SVG overlay（位置追踪+点击检测） + DOM span 包裹（CSS 样式）
 // 支持两种标记类型：underline（下划线）/ marker（马克笔高亮）
 
-import { useState, useCallback, useEffect } from 'react';
-import useLocalStorageState from 'use-local-storage-state';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Rendition } from 'epubjs';
 import { aiService } from '@shared/services/aiService';
 import { showError, showSuccess } from '@shared/utils/common/ToastTiShi';
+import { annotationService, type HuaXianXinXi } from '@shared/services/annotationService';
 
 export type ChuTiLeiXing = '名词解释' | '意图理解' | '生活应用';
 
 export type HuaXianYanSe = 'yellow' | 'green' | 'blue' | 'pink';
 
 export type BiaoJiLeiXing = 'underline' | 'marker';
-
-export interface HuaXianXinXi {
-  id: string;
-  text: string;
-  cfiRange: string;
-  yanSe: HuaXianYanSe;
-  leiXing: BiaoJiLeiXing;
-  beiZhu: string;
-  createdAt: number;
-}
 
 interface HuaCiJiaoHuWenJian {
   setCurrentCfiRange: (cfiRange: string | null) => void;
@@ -33,7 +23,7 @@ interface HuaCiJiaoHuWenJian {
 interface UseHuaXianChuTiProps {
   userId: string;
   bookId: string;
-  chapterId: string;
+  chapterId?: string;
   onClose: () => void;
   renditionRef?: React.RefObject<Rendition | undefined>;
   bookRef?: React.RefObject<any>;
@@ -81,7 +71,6 @@ function baoGuaSpan(rendition: Rendition, cfiRange: string, className: string, i
     span.appendChild(fragment);
     range.insertNode(span);
   } catch (e) {
-    console.warn('DOM 包裹失败（跨元素边界时正常）:', e);
   }
 }
 
@@ -95,14 +84,35 @@ export function useHuaXianChuTi({
   huaCiJiaoHuRef,
 }: UseHuaXianChuTiProps) {
   const [generating, setGenerating] = useState(false);
-  const storageKey = `huaxian_${userId}_${bookId}_${chapterId}`;
-  const [huaXianList, setHuaXianList] = useLocalStorageState<HuaXianXinXi[]>(storageKey, { defaultValue: [] });
+  const [huaXianList, setHuaXianList] = useState<HuaXianXinXi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const applyBiaoJiRef = useRef<(() => void) | null>(null);
+  const huaXianListRef = useRef<HuaXianXinXi[]>([]);
 
   useEffect(() => {
-    if (huaXianList.length === 0) return;
-    const cleaned = huaXianList.filter((h, i, self) => i === self.findIndex(x => x.cfiRange === h.cfiRange && x.leiXing === h.leiXing));
-    if (cleaned.length < huaXianList.length) setHuaXianList(cleaned);
-  }, []);
+    annotationService.setUserId(userId);
+  }, [userId]);
+
+  const huoQuBiaoZhu = useCallback(async () => {
+    console.log('从后端获取划线数据，bookId:', bookId);
+    const { annotations, error } = await annotationService.getAnnotationsByBook(bookId);
+    if (error) {
+      console.error('获取划线失败:', error);
+      return;
+    }
+    console.log('从后端获取到的划线数据:', annotations);
+    setHuaXianList(annotations);
+    huaXianListRef.current = annotations;
+    setLoading(false);
+  }, [bookId]);
+
+  useEffect(() => {
+    huoQuBiaoZhu();
+  }, [huoQuBiaoZhu]);
+
+  useEffect(() => {
+    huaXianListRef.current = huaXianList;
+  }, [huaXianList]);
 
   const yingYongBiaoJi = useCallback(async (cfiRange: string, qingChuJiu: boolean = false, yanSe: HuaXianYanSe = 'blue', leiXing: BiaoJiLeiXing = 'underline', id?: string) => {
     const rendition = renditionRef?.current;
@@ -121,54 +131,140 @@ export function useHuaXianChuTi({
   }, [renditionRef]);
 
   useEffect(() => {
+    console.log('useHuaXianChuTi useEffect 执行', { userId, bookId });
     let rendition = renditionRef?.current;
+    let checkRenditionInterval: ReturnType<typeof setInterval> | null = null;
+    
     if (!rendition) {
-      const checkRendition = setInterval(() => {
+      console.log('rendition 不存在，开始轮询');
+      checkRenditionInterval = setInterval(() => {
         rendition = renditionRef?.current;
         if (rendition) {
-          clearInterval(checkRendition);
-          setupRenditionListener(rendition);
+          console.log('rendition 已获取成功，设置监听器');
+          if (checkRenditionInterval) {
+            clearInterval(checkRenditionInterval);
+            checkRenditionInterval = null;
+          }
+          applyBiaoJiRef.current = setupRenditionListener(rendition);
         }
       }, 100);
-      return () => clearInterval(checkRendition);
+    } else {
+      console.log('rendition 已存在，直接设置监听器');
+      applyBiaoJiRef.current = setupRenditionListener(rendition);
     }
-    setupRenditionListener(rendition);
 
     function setupRenditionListener(r: typeof rendition) {
+      let isApplying = false;
+      
+      const qingLiDOMBiaoJi = () => {
+        try {
+          const contents = r.getContents();
+          if (contents && contents[0]) {
+            const doc = contents[0].window?.document;
+            if (doc) {
+              const spans = doc.querySelectorAll('[data-biaoji="true"]');
+              spans.forEach(span => {
+                if (span.parentNode) {
+                  const parent = span.parentNode;
+                  while (span.firstChild) {
+                    parent.insertBefore(span.firstChild, span);
+                  }
+                  parent.removeChild(span);
+                }
+              });
+              const sousuoGaoLiang = doc.querySelectorAll('.search-highlight');
+              console.log('搜索高亮清理: 找到', sousuoGaoLiang.length, '个');
+              sousuoGaoLiang.forEach(span => {
+                if (span.parentNode) {
+                  const parent = span.parentNode;
+                  while (span.firstChild) {
+                    parent.insertBefore(span.firstChild, span);
+                  }
+                  parent.removeChild(span);
+                }
+              });
+            }
+          }
+        } catch (e) {
+          console.warn('清理 DOM 标记失败:', e);
+        }
+      };
+
       const applyBiaoJi = () => {
-        const currentRendition = renditionRef?.current;
-        if (!currentRendition) return;
-        currentRendition.annotations.remove('highlight');
-        const currentData = JSON.parse(localStorage.getItem(`huaxian_${userId}_${bookId}_${chapterId}`) || '[]');
-        if (currentData.length === 0) return;
-        const quChong = currentData.filter((h: HuaXianXinXi, index: number, self: HuaXianXinXi[]) =>
-          index === self.findIndex(item => item.cfiRange === h.cfiRange && item.leiXing === h.leiXing)
-        );
-        quChong.forEach((h: HuaXianXinXi) => {
-          if (!h.cfiRange) return;
-          const se = YAN_SE_PEI_ZHI[h.yanSe] || YAN_SE_PEI_ZHI.blue;
-          const lx = h.leiXing || 'underline';
-          const cls = lx === 'marker' ? (MK_CLASS_MAP[h.yanSe] || MK_CLASS_MAP.yellow) : (HL_CLASS_MAP[h.yanSe] || HL_CLASS_MAP.blue);
-          const svgStyle = { fill: se, 'fill-opacity': lx === 'marker' ? '0.25' : '0', stroke: se, 'stroke-width': '0', 'stroke-dasharray': 'none' };
-          try {
-            currentRendition.annotations.add('highlight', h.cfiRange, {}, () => {}, cls, svgStyle);
-          } catch (e) { console.warn('annotations.add 失败:', e); }
-          try {
-            baoGuaSpan(currentRendition, h.cfiRange, cls, h.id);
-          } catch (e) {}
-        });
+        if (isApplying) {
+          console.log('applyBiaoJi 正在执行中，跳过本次调用');
+          return;
+        }
+        console.log('applyBiaoJi 被调用');
+        if (!r) return;
+        isApplying = true;
+        try {
+          r.annotations.remove('highlight');
+          qingLiDOMBiaoJi();
+          
+          const currentData = huaXianListRef.current;
+          console.log('当前划线数据:', { count: currentData.length, data: currentData });
+          
+          if (currentData.length === 0) {
+            console.log('没有划线数据可应用');
+            return;
+          }
+          
+          const quChong = currentData.filter((h, index, self) =>
+            index === self.findIndex((item) => item.cfiRange === h.cfiRange && item.leiXing === h.leiXing)
+          );
+          console.log('去重后的划线数量:', quChong.length);
+          quChong.forEach((h, idx) => {
+            console.log(`应用划线 ${idx + 1}/${quChong.length}:`, h.text?.substring(0, 30));
+            if (!h.cfiRange) {
+              console.warn('划线没有 cfiRange，跳过:', h);
+              return;
+            }
+            const se = YAN_SE_PEI_ZHI[h.yanSe] || YAN_SE_PEI_ZHI.blue;
+            const lx = h.leiXing || 'underline';
+            const cls = lx === 'marker' ? (MK_CLASS_MAP[h.yanSe] || MK_CLASS_MAP.yellow) : (HL_CLASS_MAP[h.yanSe] || HL_CLASS_MAP.blue);
+            const svgStyle = { fill: se, 'fill-opacity': lx === 'marker' ? '0.25' : '0', stroke: se, 'stroke-width': '0', 'stroke-dasharray': 'none' };
+            try {
+              r.annotations.add('highlight', h.cfiRange, {}, () => {}, cls, svgStyle);
+              console.log('annotations.add 成功');
+            } catch (e) { console.warn('annotations.add 失败:', e, 'CFI:', h.cfiRange); }
+            try {
+              baoGuaSpan(r, h.cfiRange, cls, h.id);
+              console.log('baoGuaSpan 成功');
+            } catch (e) { }
+          });
+        } finally {
+          isApplying = false;
+        }
       };
       r.on('rendered', applyBiaoJi);
       requestAnimationFrame(() => applyBiaoJi());
-      return () => r.off('rendered', applyBiaoJi);
+      return applyBiaoJi;
     }
-  }, [userId, bookId, chapterId]);
+
+    return () => {
+      if (checkRenditionInterval) {
+        clearInterval(checkRenditionInterval);
+      }
+      if (rendition && applyBiaoJiRef.current) {
+        rendition.off('rendered', applyBiaoJiRef.current);
+      }
+    };
+  }, [userId, bookId, chapterId, renditionRef]);
+
+  useEffect(() => {
+    console.log('huaXianList 已更新，数量:', huaXianList.length);
+    if (applyBiaoJiRef.current) {
+      console.log('huaXianList 变化，重新应用划线');
+      applyBiaoJiRef.current();
+    }
+  }, [huaXianList]);
 
   const handleGenerateQuestion = useCallback(async (selectedText: string, questionType: ChuTiLeiXing) => {
     if (!selectedText.trim()) return;
     setGenerating(true);
     try {
-      const { data, error } = await aiService.generateFromSelection(chapterId, selectedText, questionType, 1);
+      const { data, error } = await aiService.generateFromSelection(chapterId || '', selectedText, questionType, 1);
       if (error) {
         showError('AI 出题失败：' + error);
         return;
@@ -180,41 +276,82 @@ export function useHuaXianChuTi({
     }
   }, [chapterId, onClose]);
 
-  const handleHuaXian = useCallback((selectedText: string, yanSe: HuaXianYanSe = 'blue', beiZhu: string = '') => {
+  const handleHuaXian = useCallback(async (selectedText: string, yanSe: HuaXianYanSe = 'blue', beiZhu: string = '') => {
+    console.log('handleHuaXian 被调用', { selectedText, yanSe, beiZhu });
     const cfiRange = huaCiJiaoHuRef?.getCurrentCfiRange?.() || '';
+    
     const existingUnderline = huaXianList.find(h => h.cfiRange === cfiRange && h.leiXing === 'underline');
     if (existingUnderline) {
       showError('该文本已有划线，请先删除后再重新操作');
       onClose();
       return;
     }
-    const xinXi: HuaXianXinXi = { id: Date.now().toString(), text: selectedText, cfiRange: cfiRange || '', yanSe, leiXing: 'underline', beiZhu, createdAt: Date.now() };
-    setHuaXianList(prev => [...prev, xinXi]);
-    if (cfiRange) yingYongBiaoJi(cfiRange, false, yanSe, 'underline', xinXi.id);
-    huaCiJiaoHuRef?.setCurrentCfiRange?.(null);
-    showSuccess('已添加划线');
-    onClose();
-  }, [onClose, yingYongBiaoJi, huaCiJiaoHuRef, huaXianList]);
 
-  const handleMaKeBi = useCallback((selectedText: string, yanSe: HuaXianYanSe = 'yellow', beiZhu: string = '') => {
+    const { annotation, error } = await annotationService.createAnnotation({
+      bookId,
+      text: selectedText,
+      cfiRange,
+      yanSe,
+      leiXing: 'underline',
+      beiZhu,
+    });
+
+    if (error) {
+      showError('添加划线失败：' + error.message);
+      return;
+    }
+
+    if (annotation) {
+      setHuaXianList(prev => [...prev, annotation]);
+      huaXianListRef.current = [...huaXianList, annotation];
+      
+      if (cfiRange) yingYongBiaoJi(cfiRange, false, yanSe, 'underline', annotation.id);
+      huaCiJiaoHuRef?.setCurrentCfiRange?.(null);
+      showSuccess('已添加划线');
+      onClose();
+    }
+  }, [onClose, yingYongBiaoJi, huaCiJiaoHuRef, huaXianList, bookId]);
+
+  const handleMaKeBi = useCallback(async (selectedText: string, yanSe: HuaXianYanSe = 'yellow', beiZhu: string = '') => {
+    console.log('handleMaKeBi 被调用', { selectedText, yanSe, beiZhu });
     const cfiRange = huaCiJiaoHuRef?.getCurrentCfiRange?.() || '';
+    
     const existingMarker = huaXianList.find(h => h.cfiRange === cfiRange && h.leiXing === 'marker');
     if (existingMarker) {
       showError('该文本已有高亮，请先删除后再重新操作');
       onClose();
       return;
     }
-    const xinXi: HuaXianXinXi = { id: Date.now().toString(), text: selectedText, cfiRange: cfiRange || '', yanSe, leiXing: 'marker', beiZhu, createdAt: Date.now() };
-    setHuaXianList(prev => [...prev, xinXi]);
-    if (cfiRange) yingYongBiaoJi(cfiRange, false, yanSe, 'marker', xinXi.id);
-    huaCiJiaoHuRef?.setCurrentCfiRange?.(null);
-    showSuccess('已添加马克笔');
-    onClose();
-  }, [onClose, yingYongBiaoJi, huaCiJiaoHuRef, huaXianList]);
 
-  const handleDeleteHuaXian = useCallback((id: string) => {
+    const { annotation, error } = await annotationService.createAnnotation({
+      bookId,
+      text: selectedText,
+      cfiRange,
+      yanSe,
+      leiXing: 'marker',
+      beiZhu,
+    });
+
+    if (error) {
+      showError('添加高亮失败：' + error.message);
+      return;
+    }
+
+    if (annotation) {
+      setHuaXianList(prev => [...prev, annotation]);
+      huaXianListRef.current = [...huaXianList, annotation];
+      
+      if (cfiRange) yingYongBiaoJi(cfiRange, false, yanSe, 'marker', annotation.id);
+      huaCiJiaoHuRef?.setCurrentCfiRange?.(null);
+      showSuccess('已添加马克笔');
+      onClose();
+    }
+  }, [onClose, yingYongBiaoJi, huaCiJiaoHuRef, huaXianList, bookId]);
+
+  const handleDeleteHuaXian = useCallback(async (id: string) => {
     const deleted = huaXianList.find(h => h.id === id);
     const rendition = renditionRef?.current;
+    
     if (rendition && deleted?.cfiRange) {
       try {
         rendition.annotations.remove(deleted.cfiRange, 'highlight');
@@ -240,40 +377,66 @@ export function useHuaXianChuTi({
         console.warn('移除 DOM 标记失败:', error);
       }
     }
+
+    const { error } = await annotationService.deleteAnnotation(id);
+    if (error) {
+      showError('删除标记失败：' + error.message);
+      return;
+    }
+
     setHuaXianList(prev => prev.filter(h => h.id !== id));
+    huaXianListRef.current = huaXianList.filter(h => h.id !== id);
     showSuccess('已删除标记');
   }, [huaXianList, renditionRef]);
 
-  const handleChangeYanSe = useCallback((id: string, yanSe: HuaXianYanSe) => {
+  const handleChangeYanSe = useCallback(async (id: string, yanSe: HuaXianYanSe) => {
     const target = huaXianList.find(h => h.id === id);
     if (!target) return;
-    const rendition = renditionRef?.current;
-    if (rendition && target.cfiRange) {
-      const se = YAN_SE_PEI_ZHI[yanSe];
-      const cls = target.leiXing === 'marker' ? MK_CLASS_MAP[yanSe] : HL_CLASS_MAP[yanSe];
-      const span = rendition.getContents()?.[0]?.window?.document?.querySelector(`[data-huaxian-id="${id}"]`);
-      if (span) {
-        span.className = cls;
-        span.setAttribute('data-biaoji', 'true');
-      }
+
+    const { annotation, error } = await annotationService.updateAnnotation(id, { yanSe });
+    if (error) {
+      showError('更新颜色失败：' + error.message);
+      return;
     }
-    setHuaXianList(prev => prev.map(h => h.id === id ? { ...h, yanSe } : h));
+
+    if (annotation) {
+      const rendition = renditionRef?.current;
+      if (rendition && target.cfiRange) {
+        const se = YAN_SE_PEI_ZHI[yanSe];
+        const cls = target.leiXing === 'marker' ? MK_CLASS_MAP[yanSe] : HL_CLASS_MAP[yanSe];
+        const span = rendition.getContents()?.[0]?.window?.document?.querySelector(`[data-huaxian-id="${id}"]`);
+        if (span) {
+          span.className = cls;
+          span.setAttribute('data-biaoji', 'true');
+        }
+      }
+      setHuaXianList(prev => prev.map(h => h.id === id ? { ...h, yanSe } : h));
+    }
   }, [huaXianList, renditionRef]);
 
-  const handleChangeLeiXing = useCallback((id: string, leiXing: 'underline' | 'marker') => {
+  const handleChangeLeiXing = useCallback(async (id: string, leiXing: 'underline' | 'marker') => {
     const target = huaXianList.find(h => h.id === id);
     if (!target) return;
-    const rendition = renditionRef?.current;
-    if (rendition && target.cfiRange) {
-      const se = YAN_SE_PEI_ZHI[target.yanSe];
-      const cls = leiXing === 'marker' ? MK_CLASS_MAP[target.yanSe] : HL_CLASS_MAP[target.yanSe];
-      const span = rendition.getContents()?.[0]?.window?.document?.querySelector(`[data-huaxian-id="${id}"]`);
-      if (span) {
-        span.className = cls;
-        span.setAttribute('data-biaoji', 'true');
-      }
+
+    const { annotation, error } = await annotationService.updateAnnotation(id, { leiXing });
+    if (error) {
+      showError('更新类型失败：' + error.message);
+      return;
     }
-    setHuaXianList(prev => prev.map(h => h.id === id ? { ...h, leiXing } : h));
+
+    if (annotation) {
+      const rendition = renditionRef?.current;
+      if (rendition && target.cfiRange) {
+        const se = YAN_SE_PEI_ZHI[target.yanSe];
+        const cls = leiXing === 'marker' ? MK_CLASS_MAP[target.yanSe] : HL_CLASS_MAP[target.yanSe];
+        const span = rendition.getContents()?.[0]?.window?.document?.querySelector(`[data-huaxian-id="${id}"]`);
+        if (span) {
+          span.className = cls;
+          span.setAttribute('data-biaoji', 'true');
+        }
+      }
+      setHuaXianList(prev => prev.map(h => h.id === id ? { ...h, leiXing } : h));
+    }
   }, [huaXianList, renditionRef]);
 
   const handleCopy = useCallback(async (selectedText: string) => {
@@ -289,6 +452,7 @@ export function useHuaXianChuTi({
   return {
     generating,
     huaXianList,
+    loading,
     handleGenerateQuestion,
     handleHuaXian,
     handleMaKeBi,
@@ -296,5 +460,6 @@ export function useHuaXianChuTi({
     handleChangeYanSe,
     handleChangeLeiXing,
     handleCopy,
+    refresh: huoQuBiaoZhu,
   };
 }

@@ -12,7 +12,7 @@ import { authService } from '../../../shared/services/auth';
 
 interface UseEPUBReaderJiChuHuoProps {
   bookId: string;
-  chapterId: string;
+  chapterId?: string;
   onParagraphCreated?: () => void;
   renditionRef?: React.RefObject<Rendition | undefined>;
   bookRef?: React.RefObject<any>;

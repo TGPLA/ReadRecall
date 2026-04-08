@@ -116,6 +116,16 @@ func InitRoutes() *gin.Engine {
 			settings.PUT("", controllers.UpdateSettings)
 		}
 
+		annotations := api.Group("/annotations")
+		annotations.Use(middleware.AuthMiddleware())
+		{
+			annotations.GET("/book/:book_id", controllers.GetAnnotationsByBook)
+			annotations.POST("", controllers.CreateAnnotation)
+			annotations.GET("/:id", controllers.GetAnnotationDetail)
+			annotations.PUT("/:id", controllers.UpdateAnnotation)
+			annotations.DELETE("/:id", controllers.DeleteAnnotation)
+		}
+
 		statistics := api.Group("/statistics")
 		statistics.Use(middleware.AuthMiddleware())
 		{

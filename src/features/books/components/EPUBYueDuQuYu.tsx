@@ -104,6 +104,11 @@ export function EPUBYueDuQuYu({
   const handleGetRendition = (rendition: Rendition) => {
     renditionRef.current = rendition;
     onGetRendition(rendition);
+    
+    rendition.on('rendered', () => {
+      setIsLoading(false);
+    });
+    
     setIsLoading(false);
   };
 

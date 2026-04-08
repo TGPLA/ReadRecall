@@ -260,16 +260,16 @@ export function useHuaXianChuTi({
     }
   }, [huaXianList]);
 
-  const handleGenerateQuestion = useCallback(async (selectedText: string, questionType: ChuTiLeiXing) => {
+  const handleGenerateQuestion = useCallback(async (selectedText: string) => {
     if (!selectedText.trim()) return;
     setGenerating(true);
     try {
-      const { data, error } = await aiService.generateFromSelection(chapterId || '', selectedText, questionType, 1);
+      const { data, error } = await aiService.generateFromSelectionAuto(chapterId || '', selectedText, 1);
       if (error) {
         showError('AI 出题失败：' + error);
         return;
       }
-      showSuccess(`已生成 1 道${questionType}题目`);
+      showSuccess(`已生成 1 道${data?.questionType || ''}题目`);
       onClose();
     } finally {
       setGenerating(false);

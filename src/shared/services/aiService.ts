@@ -64,6 +64,32 @@ export interface GenerateQuestionsResult {
   }>;
 }
 
+export interface GenerateQuestionsAutoResult {
+  questions: Array<{
+    question: string;
+    answer: string;
+    type: string;
+    knowledgePoint: string;
+  }>;
+  questionType: string;
+}
+
+export interface TextAnalysisResult {
+  type: string;
+  title: string;
+  options: string[];
+  description: string;
+}
+
+export interface ConceptExplanationResult {
+  explanation: string;
+  example: string;
+}
+
+export interface ParaphraseResult {
+  paraphrase: string;
+}
+
 class AIService {
   private getHeaders(): Record<string, string> {
     const token = authService.getToken();
@@ -112,6 +138,129 @@ class AIService {
         return { data: null, error: error.message };
       }
       return { data: null, error: error instanceof Error ? error.message : 'AI 生成题目失败' };
+    }
+  }
+
+  async generateFromSelectionAuto(chapterId: string, selectedText: string, count: number): Promise<{ data: GenerateQuestionsAutoResult | null; error: string | null }> {
+    try {
+      const response = await fetch(`${API_BASE}/ai/generate-from-selection-auto`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          chapter_id: chapterId,
+          selected_text: selectedText,
+          count,
+        }),
+      });
+
+      if (await this.handle401(response)) {
+        return { data: null, error: '登录已过期' };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
+      }
+
+      const responseData = await response.json() as {
+        questions: RawGeneratedQuestion[];
+        count: number;
+        question_type: string;
+      };
+      const questions = (responseData?.questions || []).map(zhuanHuanTiMu);
+      return { 
+        data: { 
+          questions, 
+          questionType: responseData.question_type 
+        }, 
+        error: null 
+      };
+    } catch (error) {
+      if (error instanceof YingYongCuoWu) {
+        return { data: null, error: error.message };
+      }
+      return { data: null, error: error instanceof Error ? error.message : 'AI 生成题目失败' };
+    }
+  }
+
+  async analyzeText(content: string): Promise<{ data: TextAnalysisResult | null; error: string | null }> {
+    try {
+      const response = await fetch(`${API_BASE}/ai/analyze-text`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ content }),
+      });
+
+      if (await this.handle401(response)) {
+        return { data: null, error: '登录已过期' };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
+      }
+
+      const responseData = await response.json() as { data: TextAnalysisResult };
+      return { data: responseData.data, error: null };
+    } catch (error) {
+      if (error instanceof YingYongCuoWu) {
+        return { data: null, error: error.message };
+      }
+      return { data: null, error: error instanceof Error ? error.message : 'AI 分析失败' };
+    }
+  }
+
+  async explainConcept(content: string): Promise<{ data: ConceptExplanationResult | null; error: string | null }> {
+    try {
+      const response = await fetch(`${API_BASE}/ai/explain-concept`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ content }),
+      });
+
+      if (await this.handle401(response)) {
+        return { data: null, error: '登录已过期' };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
+      }
+
+      const responseData = await response.json() as { data: ConceptExplanationResult };
+      return { data: responseData.data, error: null };
+    } catch (error) {
+      if (error instanceof YingYongCuoWu) {
+        return { data: null, error: error.message };
+      }
+      return { data: null, error: error instanceof Error ? error.message : 'AI 解释失败' };
+    }
+  }
+
+  async paraphraseText(content: string): Promise<{ data: ParaphraseResult | null; error: string | null }> {
+    try {
+      const response = await fetch(`${API_BASE}/ai/paraphrase-text`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ content }),
+      });
+
+      if (await this.handle401(response)) {
+        return { data: null, error: '登录已过期' };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
+      }
+
+      const responseData = await response.json() as { data: ParaphraseResult };
+      return { data: responseData.data, error: null };
+    } catch (error) {
+      if (error instanceof YingYongCuoWu) {
+        return { data: null, error: error.message };
+      }
+      return { data: null, error: error instanceof Error ? error.message : 'AI 复述失败' };
     }
   }
 

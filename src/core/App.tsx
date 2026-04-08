@@ -5,9 +5,8 @@ import { useState, useEffect } from 'react';
 import { AppProvider, useApp } from '@infrastructure/hooks';
 import { BookShelf } from '@features/books/components/BookShelf';
 import { EPUBReaderPage } from '@features/books/components/EPUBReaderPage';
-import { DaTiZhu } from '@features/practice/DaTiZhu';
-import { GaiNianXueXi } from '@features/practice/GaiNianXueXi';
-import { YiTuLiJie } from '@features/practice/YiTuLiJie';
+import { FuShuXueXi } from '@features/practice/FuShuXueXi';
+import { GaiNianJieShi } from '@features/practice/GaiNianJieShi';
 import { SettingsPage } from '@features/user/components/SettingsPage';
 import { TiShiCiGuanLi } from '@features/user/components/TiShiCiGuanLi';
 import { AuthPage } from '@features/user/components/AuthPage';
@@ -19,7 +18,7 @@ import { QuanPingJiaZai } from '@shared/utils/common/JiaZaiZhuangTai';
 import { CuoWuBianJie } from '@shared/utils/common/CuoWuBianJie';
 import type { Book, Question } from '@infrastructure/types';
 
-type Page = 'shelf' | 'reader' | 'practice' | 'answer' | 'settings' | 'prompts' | 'concept-learning' | 'intention-learning';
+type Page = 'shelf' | 'reader' | 'settings' | 'prompts' | 'concept-learning' | 'concept-explanation';
 
 interface LearningSource {
   chapterId?: string;
@@ -99,9 +98,14 @@ function AppContent() {
     setCurrentPage('concept-learning');
   };
 
-  const handleStartIntentionLearning = (source: LearningSource) => {
-    setLearningSource(source);
-    setCurrentPage('intention-learning');
+  const handleFuShuXueXi = (text: string) => {
+    setLearningSource({ content: text });
+    setCurrentPage('concept-learning');
+  };
+
+  const handleGaiNianJieShi = (text: string) => {
+    setLearningSource({ content: text });
+    setCurrentPage('concept-explanation');
   };
 
   const handleBackToDetail = () => {
@@ -139,13 +143,12 @@ function AppContent() {
         <EPUBReaderPage
           book={selectedBook}
           onClose={handleCloseReader}
+          onFuShuXueXi={handleFuShuXueXi}
+          onGaiNianJieShi={handleGaiNianJieShi}
         />
       )}
-      {currentPage === 'answer' && selectedParagraph && practiceQuestions.length > 0 && (
-        <DaTiZhu paragraph={selectedParagraph} questions={practiceQuestions} onComplete={handleComplete} />
-      )}
       {currentPage === 'concept-learning' && learningSource && (
-        <GaiNianXueXi 
+        <FuShuXueXi 
           key={learningSource.chapterId ? `chapter-${learningSource.chapterId}` : `paragraph-${learningSource.paragraphId}`}
           chapterId={learningSource.chapterId}
           paragraphId={learningSource.paragraphId}
@@ -154,8 +157,12 @@ function AppContent() {
           onBack={handleBackToDetail}
         />
       )}
-      {currentPage === 'intention-learning' && selectedParagraph && (
-        <YiTuLiJie paragraph={selectedParagraph} onComplete={handleComplete} onBack={handleBackToDetail} />
+      {currentPage === 'concept-explanation' && learningSource && (
+        <GaiNianJieShi 
+          content={learningSource.content}
+          onComplete={handleComplete}
+          onBack={handleBackToDetail}
+        />
       )}
       {currentPage === 'settings' && <SettingsPage onBack={handleBackToShelf} onOpenPrompts={() => setCurrentPage('prompts')} />}
       {currentPage === 'prompts' && <TiShiCiGuanLi onBack={() => setCurrentPage('settings')} />}

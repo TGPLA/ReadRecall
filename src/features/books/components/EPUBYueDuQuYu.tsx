@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ReactReader } from 'react-reader';
 import type { Rendition } from 'epubjs';
 import { HuaXianCaiDan } from './HuaXianCaiDan';
+import { XueXiCaiDan } from './XueXiCaiDan';
 import type { HuaXianXinXi, HuaXianYanSe } from '../hooks/useHuaXianChuTi';
 
 interface EPUBYueDuQuYuProps {
@@ -35,6 +36,9 @@ interface EPUBYueDuQuYuProps {
   onDeleteHuaXian?: (id: string) => void;
   onChangeYanSe?: (id: string, yanSe: HuaXianYanSe) => void;
   onCopyText?: (text: string) => void;
+  onFuShuXueXi?: (text: string) => void;
+  onGaiNianJieShi?: (text: string) => void;
+  onXueXi?: (text: string) => void;
 }
 
 const BAO_CHI_QI_YANG_SHI: React.CSSProperties = {
@@ -113,7 +117,7 @@ export function EPUBYueDuQuYu({
   selectionRect, firstLineRect, generating, onCancel, onGenerateQuestion,
   onHighlight, onMaKeBi, onCopy, onShangYiYe, onXiaYiYe, keJian, darkMode,
   showEditMenu, editPosition, activeHuaXian, onCloseEdit,
-  onDeleteHuaXian, onChangeYanSe, onCopyText,
+  onDeleteHuaXian, onChangeYanSe, onCopyText, onFuShuXueXi, onGaiNianJieShi, onXueXi,
 }: EPUBYueDuQuYuProps) {
   const renditionRef = useRef<Rendition>();
   const rongQiRef = useRef<HTMLDivElement>(null);
@@ -237,6 +241,7 @@ export function EPUBYueDuQuYu({
                   onMaKeBi={onMaKeBi}
                   onCopy={onCopy}
                   onCancel={onCancel}
+                  onXueXi={onXueXi}
                 />
               );
             })()

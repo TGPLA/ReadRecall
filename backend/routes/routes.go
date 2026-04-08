@@ -73,6 +73,10 @@ func InitRoutes() *gin.Engine {
 		ai.Use(middleware.AuthMiddleware())
 		{
 			ai.POST("/generate-from-selection", controllers.AIGenerateFromSelection)
+			ai.POST("/generate-from-selection-auto", controllers.AIGenerateFromSelectionAuto)
+			ai.POST("/analyze-text", controllers.AIAnalyzeText)
+			ai.POST("/explain-concept", controllers.AIExplainConcept)
+			ai.POST("/paraphrase-text", controllers.AIParaphraseText)
 			ai.POST("/evaluate-answer", controllers.AIEvaluateAnswer)
 			ai.POST("/extract-concepts", controllers.AIExtractConcepts)
 			ai.POST("/evaluate-concept", controllers.AIEvaluateConcept)

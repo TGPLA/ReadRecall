@@ -20,3 +20,4 @@
 | `rules_functional_integrity.md` | 功能完整性校验：状态→逻辑→UI→交互→持久化五要素验证 |
 | `rules_connection.md` | 数据库/服务器自动连接：自动获取配置，不要麻烦用户 |
 | `projectcentric.md` | 模式优化护栏：评估任务与当前模式的匹配度，确保最佳执行质量 |
+| `rules_language.md` | 全局语言规范：代码注释、变量函数命名、对话交流统一使用中文 |

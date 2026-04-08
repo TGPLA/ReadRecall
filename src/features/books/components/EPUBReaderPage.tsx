@@ -8,9 +8,11 @@ import type { Book } from '@infrastructure/types';
 interface EPUBReaderPageProps {
   book: Book;
   onClose: () => void;
+  onFuShuXueXi?: (text: string) => void;
+  onGaiNianJieShi?: (text: string) => void;
 }
 
-export function EPUBReaderPage({ book, onClose }: EPUBReaderPageProps) {
+export function EPUBReaderPage({ book, onClose, onFuShuXueXi, onGaiNianJieShi }: EPUBReaderPageProps) {
   const epubUrl = book.epubFilePath
     ? databaseService.getEPUBUrl(book.id, book.epubFilePath)
     : '';
@@ -33,6 +35,8 @@ export function EPUBReaderPage({ book, onClose }: EPUBReaderPageProps) {
       onClose={onClose}
       bookId={book.id}
       chapterId=""
+      onFuShuXueXi={onFuShuXueXi}
+      onGaiNianJieShi={onGaiNianJieShi}
     />
   );
 }

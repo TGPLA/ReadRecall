@@ -34,6 +34,24 @@ func (c *Chapter) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
+type Paragraph struct {
+	ID        string    `gorm:"type:char(36);primaryKey" json:"id"`
+	UserId    string    `gorm:"type:char(36);not null;index" json:"user_id"`
+	BookId   string    `gorm:"type:char(36);not null;index" json:"book_id"`
+	ChapterId string   `gorm:"type:char(36);not null;index" json:"chapter_id"`
+	Content  string    `gorm:"type:text;not null" json:"content"`
+	OrderIndex int    `gorm:"default:0" json:"order_index"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
+}
+
+func (p *Paragraph) BeforeCreate(tx *gorm.DB) error {
+	if p.ID == "" {
+		p.ID = uuid.New().String()
+	}
+	return nil
+}
+
 type Concept struct {
 	ID           string                  `gorm:"type:char(36);primaryKey" json:"id"`
 	UserId       string                  `gorm:"type:char(36);not null;index" json:"user_id"`

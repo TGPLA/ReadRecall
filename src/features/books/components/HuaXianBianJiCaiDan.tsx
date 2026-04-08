@@ -2,8 +2,8 @@
 // 划线编辑菜单组件 - 点击已有划线时弹出（删除/复制/换色）
 
 import { useState, useRef, useEffect } from 'react';
-import { Trash2, Copy, Search } from 'lucide-react';
-import type { ChuTiLeiXing, HuaXianYanSe, HuaXianXinXi } from '../hooks/useHuaXianChuTi';
+import { Trash2, Copy, Brain } from 'lucide-react';
+import type { HuaXianYanSe, HuaXianXinXi } from '../hooks/useHuaXianChuTi';
 
 const YAN_SE_XUAN_XIANG: { value: HuaXianYanSe; color: string }[] = [
   { value: 'yellow', color: '#F5C842' },
@@ -12,8 +12,6 @@ const YAN_SE_XUAN_XIANG: { value: HuaXianYanSe; color: string }[] = [
   { value: 'pink', color: '#F472B6' },
 ];
 
-const CHU_TI_LEI_XING: ChuTiLeiXing[] = ['名词解释', '意图理解', '生活应用'];
-
 interface HuaXianBianJiCaiDanProps {
   show: boolean;
   position: { top: number; left: number } | null;
@@ -21,21 +19,19 @@ interface HuaXianBianJiCaiDanProps {
   currentLeiXing: 'underline' | 'marker';
   activeHuaXianList: HuaXianXinXi[];
   activeHuaXianText?: string;
-  generating?: boolean;
   onDelete: () => void;
   onDeleteSingle: (id: string) => void;
   onCopy: () => void;
   onChangeYanSe: (yanSe: HuaXianYanSe) => void;
   onChangeLeiXing: (leiXing: 'underline' | 'marker') => void;
-  onGenerateQuestion?: (text: string, type: ChuTiLeiXing) => void;
+  onXueXi?: (text: string) => void;
   onClose: () => void;
 }
 
 export function HuaXianBianJiCaiDan({
-  show, position, currentYanSe, currentLeiXing, activeHuaXianList, activeHuaXianText, generating, onDelete, onDeleteSingle, onCopy, onChangeYanSe, onChangeLeiXing, onGenerateQuestion, onClose,
+  show, position, currentYanSe, currentLeiXing, activeHuaXianList, activeHuaXianText, onDelete, onDeleteSingle, onCopy, onChangeYanSe, onChangeLeiXing, onXueXi, onClose,
 }: HuaXianBianJiCaiDanProps) {
   const [visible, setVisible] = useState(false);
-  const [showSubMenu, setShowSubMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { if (show) requestAnimationFrame(() => setVisible(true)); else setVisible(false); }, [show]);
@@ -127,12 +123,14 @@ export function HuaXianBianJiCaiDan({
               <Trash2 size={14} /><span>删除</span>
             </button>
             <div style={{ width: '1px', height: '1.2rem', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-            <button onClick={(e) => { e.stopPropagation(); setShowSubMenu(!showSubMenu); }} title="AI问书"
-              style={{ ...btnStyle, color: showSubMenu ? '#60a5fa' : '#ffffff' }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(96,165,250,0.25)'}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
-              <Search size={14} /><span>AI问书</span>
-            </button>
+            {onXueXi && activeHuaXianText && (
+              <button onClick={(e) => { e.stopPropagation(); onXueXi(activeHuaXianText!); }} title="学习"
+                style={{ ...btnStyle, color: '#8b5cf6' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(139, 92, 246, 0.25)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
+                <Brain size={14} /><span>学习</span>
+              </button>
+            )}
             <div style={{ width: '1px', height: '1.2rem', backgroundColor: 'rgba(255,255,255,0.15)' }} />
             <button onClick={(e) => { e.stopPropagation(); onCopy(); }} title="复制文字"
               style={btnStyle} onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(96,165,250,0.25)'}
@@ -161,20 +159,6 @@ export function HuaXianBianJiCaiDan({
             />
           ))}
         </div>
-        {showSubMenu && onGenerateQuestion && activeHuaXianText && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', padding: '0.3rem', marginTop: '0.3rem', backgroundColor: 'rgba(40,40,40,0.95)', borderRadius: '0.5rem' }}>
-            {CHU_TI_LEI_XING.map(type => (
-              <button key={type}
-                onClick={(e) => { e.stopPropagation(); onGenerateQuestion(activeHuaXianText!, type); setShowSubMenu(false); }}
-                disabled={generating}
-                style={{ display: 'block', padding: '0.4rem 0.6rem', border: 'none', backgroundColor: 'transparent', color: generating ? 'rgba(255,255,255,0.4)' : '#ffffff', cursor: generating ? 'not-allowed' : 'pointer', fontSize: '0.75rem', textAlign: 'left', borderRadius: '0.35rem', transition: 'background-color 0.15s' }}
-                onMouseEnter={e => !generating && (e.currentTarget.style.backgroundColor = 'rgba(96,165,250,0.2)')}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                {generating ? '生成中...' : type}
-              </button>
-            ))}
-          </div>
-        )}
         <div style={{
           position: 'absolute', left: '50%', bottom: '-10px', transform: 'translateX(-50%)',
           width: 0, height: 0, borderLeft: '10px solid transparent', borderRight: '10px solid transparent',

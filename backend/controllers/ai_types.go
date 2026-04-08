@@ -19,3 +19,21 @@ type AIGenerateSelectionRequest struct {
 	QuestionType  string `json:"question_type" binding:"required"`
 	Count         int    `json:"count"`
 }
+
+type AIGenerateSelectionAutoRequest struct {
+	ChapterId    string `json:"chapter_id" binding:"required"`
+	SelectedText string `json:"selected_text" binding:"required"`
+	Count         int    `json:"count"`
+}
+
+type AIAnalyzeTextRequest struct {
+	Content string `json:"content" binding:"required"`
+}
+
+type AIExplainConceptRequest struct {
+	Content string `json:"content" binding:"required"`
+}
+
+type AIParaphraseTextRequest struct {
+	Content string `json:"content" binding:"required"`
+}

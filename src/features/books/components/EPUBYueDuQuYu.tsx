@@ -48,22 +48,40 @@ const KA_PIAN_YANG_SHI: React.CSSProperties = {
   boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 2px 16px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column',
 };
 
-function ShuangLanPaiBan({ rendition }: { rendition: Rendition | undefined }) {
+function ShuangLanPaiBan({ rendition, darkMode }: { rendition: Rendition | undefined; darkMode?: boolean }) {
   useEffect(() => {
     if (!rendition) return;
+    
+    const beiJingSe = darkMode ? '#222228' : '#F2F2F4';
+    const wenZiSe = darkMode ? '#BBBBc4' : '#1A1A2E';
+    const lieGuiSe = darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    
     rendition.themes.register('default', {});
     rendition.themes.default('body', {
-      'background-color': 'var(--zhi-zhen-bei-jing) !important',
-      'background': 'var(--zhi-zhen-bei-jing) !important',
+      'background-color': `${beiJingSe} !important`,
+      'background': `${beiJingSe} !important`,
       'padding': '48px 56px !important', 'column-count': '2 !important',
-      'column-gap': '56px !important', 'column-rule': '1px solid rgba(255,255,255,0.05) !important',
+      'column-gap': '56px !important', 'column-rule': `1px solid ${lieGuiSe} !important`,
       'max-width': 'none !important', 'height': '100% !important', 'box-sizing': 'border-box !important',
-      'overflow-y': 'auto !important', 'color': 'var(--zheng-wen-yan-se) !important',
+      'overflow-y': 'auto !important', 'color': `${wenZiSe} !important`,
     });
-    rendition.themes.default('p, li, div, span', { 'max-width': 'none !important', 'break-inside': 'avoid !important', 'orphans': '3 !important', 'widows': '3 !important' });
-    rendition.themes.default('*', { 'max-width': 'none !important' });
+    rendition.themes.default('p, li, div, span, h1, h2, h3, h4, h5, h6, a, strong, em, b, i, u, del, ins, mark, sup, sub, code, pre, blockquote', {
+      'max-width': 'none !important',
+      'break-inside': 'avoid !important',
+      'orphans': '3 !important',
+      'widows': '3 !important',
+      'color': `${wenZiSe} !important`,
+      'background-color': 'transparent !important',
+      'background': 'transparent !important',
+    });
+    rendition.themes.default('*', {
+      'max-width': 'none !important',
+      'color': `${wenZiSe} !important`,
+      'background-color': 'transparent !important',
+      'background': 'transparent !important',
+    });
     (rendition as any).spread = () => true;
-  }, [rendition]);
+  }, [rendition, darkMode]);
   return null;
 }
 
@@ -129,7 +147,7 @@ export function EPUBYueDuQuYu({
       <QingChuKuNeiBuBianJu containerRef={rongQiRef} />
       <div style={KA_PIAN_YANG_SHI}>
         <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-          <ShuangLanPaiBan rendition={renditionRef.current} />
+          <ShuangLanPaiBan rendition={renditionRef.current} darkMode={darkMode} />
           {url && (
             <ReactReader
               url={url}
@@ -145,9 +163,12 @@ export function EPUBYueDuQuYu({
                 allowScriptedContent: true,
                 width: '100%',
                 height: '100%',
-                styles: {
+                styles: darkMode ? {
                   body: { 'background-color': '#222228', 'color': '#BBBBc4' },
                   '*': { 'background-color': '#222228', 'color': '#BBBBc4' },
+                } : {
+                  body: { 'background-color': '#F2F2F4', 'color': '#1A1A2E' },
+                  '*': { 'background-color': '#F2F2F4', 'color': '#1A1A2E' },
                 },
               }}
             />
@@ -211,9 +232,7 @@ export function EPUBYueDuQuYu({
                   showMenu={showMenu}
                   position={{ top: menuTop, left: menuLeft }}
                   showCaretUp={showCaretUp}
-                  generating={generating}
                   darkMode={darkMode}
-                  onGenerateQuestion={onGenerateQuestion}
                   onHuaXian={onHighlight}
                   onMaKeBi={onMaKeBi}
                   onCopy={onCopy}

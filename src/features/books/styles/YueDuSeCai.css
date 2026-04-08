@@ -70,4 +70,23 @@
 .yue-du-qi[data-theme="light"] iframe body {
   background-color: #F2F2F4 !important;
   background: #F2F2F4 !important;
+  color: #1A1A2E !important;
+}
+
+/* 强制覆盖EPUB中所有元素的背景和文字颜色 */
+.yue-du-qi iframe *,
+.yue-du-qi[data-theme="dark"] iframe * {
+  background-color: transparent !important;
+  color: #BBBBc4 !important;
+}
+
+.yue-du-qi[data-theme="light"] iframe * {
+  background-color: transparent !important;
+  color: #1A1A2E !important;
+}
+
+/* 特殊元素的背景色处理 - 只允许特定的背景色 */
+.yue-du-qi iframe *[style*="background"]:not([style*="transparent"]) {
+  background-color: inherit !important;
+  background: inherit !important;
 }

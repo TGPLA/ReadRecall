@@ -49,15 +49,15 @@ export function ChaZhaoChouTi({ bookRef, renditionRef, zhangJieLieBiao, onJump, 
       />
       {results.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem', borderBottom: '1px solid #333', gap: '1rem' }}>
-          <button onClick={() => { const newIdx = Math.max(0, dangQianSuoYin - 1); const r = results[newIdx]; if (r) { if (dangQianSuoYin === 0) { showInfo('已是第一个结果'); return; } shangYiGe(); onJump(r.cfi, input, true, r.weiZhi); } }} disabled={dangQianSuoYin === 0}
-            style={{ padding: '0.4rem 0.8rem', backgroundColor: '#374151', border: 'none', borderRadius: '4px', color: '#d1d5db', cursor: 'pointer', opacity: dangQianSuoYin === 0 ? 0.5 : 1 }}>
+          <button onClick={() => { if (dangQianSuoYin <= 0) { showInfo('已是第一个结果'); return; } const newIdx = dangQianSuoYin - 1; const r = results[newIdx]; if (r) { shangYiGe(); onJump(r.cfi, input, true, r.weiZhi); } }}
+            style={{ padding: '0.4rem 0.8rem', backgroundColor: '#374151', border: 'none', borderRadius: '4px', color: '#d1d5db', cursor: 'pointer' }}>
             ‹ 上一个
           </button>
           <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>
             {dangQianSuoYin + 1} / {results.length}
           </span>
-          <button onClick={() => { const newIdx = Math.min(results.length - 1, dangQianSuoYin + 1); const r = results[newIdx]; if (r) { if (dangQianSuoYin === results.length - 1) { showInfo('已是最后一个结果'); return; } xiaYiGe(); onJump(r.cfi, input, true, r.weiZhi); } }} disabled={dangQianSuoYin === results.length - 1}
-            style={{ padding: '0.4rem 0.8rem', backgroundColor: '#374151', border: 'none', borderRadius: '4px', color: '#d1d5db', cursor: 'pointer', opacity: dangQianSuoYin === results.length - 1 ? 0.5 : 1 }}>
+          <button onClick={() => { if (dangQianSuoYin >= results.length - 1) { showInfo('已是最后一个结果'); return; } const newIdx = dangQianSuoYin + 1; const r = results[newIdx]; if (r) { xiaYiGe(); onJump(r.cfi, input, true, r.weiZhi); } }}
+            style={{ padding: '0.4rem 0.8rem', backgroundColor: '#374151', border: 'none', borderRadius: '4px', color: '#d1d5db', cursor: 'pointer' }}>
             下一个 ›
           </button>
         </div>

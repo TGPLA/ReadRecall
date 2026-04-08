@@ -223,9 +223,12 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
             currentYanSe={p.activeHuaXian.yanSe}
             currentLeiXing={p.activeHuaXian.leiXing || 'underline'}
             activeHuaXianList={p.activeHuaXianList}
+            activeHuaXianText={p.activeHuaXian.text}
+            generating={p.generating}
             onDelete={p.handleDeleteHuaXian} onDeleteSingle={p.handleDeleteSingleHuaXian}
             onCopy={p.handleCopyText} onChangeYanSe={p.handleChangeYanSe}
-            onChangeLeiXing={p.handleChangeLeiXing} onClose={p.handleCloseEdit}
+            onChangeLeiXing={p.handleChangeLeiXing} onGenerateQuestion={p.handleGenerateQuestion}
+            onClose={p.handleCloseEdit}
           />
         )}
       </div>

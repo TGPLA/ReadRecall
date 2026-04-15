@@ -14,7 +14,7 @@ export interface HuaXianXinXi {
   text: string;
   cfiRange: string;
   yanSe: 'yellow' | 'green' | 'blue' | 'pink';
-  leiXing: 'underline' | 'marker';
+  leiXing: 'underline';
   beiZhu: string;
   createdAt: number;
 }

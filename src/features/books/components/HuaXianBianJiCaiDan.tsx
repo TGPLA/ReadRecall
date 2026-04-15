@@ -16,20 +16,18 @@ interface HuaXianBianJiCaiDanProps {
   show: boolean;
   position: { top: number; left: number } | null;
   currentYanSe: HuaXianYanSe;
-  currentLeiXing: 'underline' | 'marker';
   activeHuaXianList: HuaXianXinXi[];
   activeHuaXianText?: string;
   onDelete: () => void;
   onDeleteSingle: (id: string) => void;
   onCopy: () => void;
   onChangeYanSe: (yanSe: HuaXianYanSe) => void;
-  onChangeLeiXing: (leiXing: 'underline' | 'marker') => void;
   onXueXi?: (text: string) => void;
   onClose: () => void;
 }
 
 export function HuaXianBianJiCaiDan({
-  show, position, currentYanSe, currentLeiXing, activeHuaXianList, activeHuaXianText, onDelete, onDeleteSingle, onCopy, onChangeYanSe, onChangeLeiXing, onXueXi, onClose,
+  show, position, currentYanSe, activeHuaXianList, activeHuaXianText, onDelete, onDeleteSingle, onCopy, onChangeYanSe, onXueXi, onClose,
 }: HuaXianBianJiCaiDanProps) {
   const [visible, setVisible] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -110,7 +108,7 @@ export function HuaXianBianJiCaiDan({
                 onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                 <Trash2 size={12} />
                 <span style={{ fontSize: '0.72rem' }}>
-                  删除{h.leiXing === 'marker' ? '高亮' : '划线'}
+                  删除划线
                 </span>
               </button>
             ))}
@@ -137,15 +135,6 @@ export function HuaXianBianJiCaiDan({
               onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
               <Copy size={14} /><span>复制</span>
             </button>
-            <div style={{ width: '1px', height: '1.2rem', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-            {activeHuaXianList.length === 1 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onChangeLeiXing(currentLeiXing === 'underline' ? 'marker' : 'underline'); }}
-                style={btnStyle}
-              >
-                转为{currentLeiXing === 'underline' ? '高亮' : '划线'}
-              </button>
-            )}
           </div>
         )}
         <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }} />

@@ -9,6 +9,7 @@ import { showError } from '@shared/utils/common/ToastTiShi';
 interface XueXiCaiDanProps {
   show: boolean;
   position: { top: number; left: number };
+  startPosition?: { top: number; left: number } | null;
   text: string;
   chapterId?: string;
   darkMode?: boolean;
@@ -31,11 +32,53 @@ const XUAN_XIANG_TU_BIAO: Record<string, React.ReactNode> = {
 };
 
 export function XueXiCaiDan({
-  show, position, text, chapterId, darkMode, onClose, onExplain, onParaphrase, onQuiz,
+  show, position, startPosition, text, chapterId, darkMode, onClose, onExplain, onParaphrase, onQuiz,
 }: XueXiCaiDanProps) {
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<TextAnalysisResult | null>(null);
+  const [animatedPosition, setAnimatedPosition] = useState(position);
   const menuRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (show && startPosition) {
+      setAnimatedPosition(startPosition);
+      startTimeRef.current = performance.now();
+      const duation = 300;
+      
+      const animate = (currentTime: number) => {
+        const elapsed = currentTime - startTimeRef.current;
+        const progress = Math.min(elapsed / duation, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        
+        const currentTop = startPosition.top + (position.top - startPosition.top) * eased;
+        const currentLeft = startPosition.left + (position.left - startPosition.left) * eased;
+        
+        setAnimatedPosition({ top: currentTop, left: currentLeft });
+        
+        if (progress < 1) {
+          animationRef.current = requestAnimationFrame(animate);
+        }
+      };
+      
+      animationRef.current = requestAnimationFrame(animate);
+    } else {
+      setAnimatedPosition(position);
+    }
+    
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [show, startPosition, position.top, position.left]);
+
+  useEffect(() => {
+    if (!startPosition) {
+      setAnimatedPosition(position);
+    }
+  }, [position.top, position.left]);
 
   useEffect(() => {
     if (show && text) {
@@ -97,10 +140,12 @@ export function XueXiCaiDan({
 
   const menuStyle: React.CSSProperties = {
     position: 'fixed',
-    top: `${position.top}px`,
-    left: `${position.left}px`,
+    top: `${animatedPosition.top}px`,
+    left: `${animatedPosition.left}px`,
     zIndex: 9999,
     transform: 'translate(-50%, -100%)',
+    transition: 'opacity 0.2s ease',
+    opacity: show ? 1 : 0,
   };
 
   const containerStyle: React.CSSProperties = {

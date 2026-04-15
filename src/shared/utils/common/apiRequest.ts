@@ -2,6 +2,7 @@
 // API 请求客户端 - 统一的 HTTP 请求封装
 
 import { translateError } from './errorTranslator';
+import { authService } from '../../services/auth';
 
 export interface ApiResponse<T> {
   success: boolean;

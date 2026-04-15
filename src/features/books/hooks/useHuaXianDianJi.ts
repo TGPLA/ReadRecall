@@ -24,9 +24,9 @@ interface UseHuaXianDianJiProps {
   huaXianList: HuaXianXinXi[];
   onDelete: (id: string) => void;
   onChangeYanSe: (id: string, yanSe: HuaXianYanSe) => void;
-  onChangeLeiXing: (id: string, leiXing: 'underline' | 'marker') => void;
   onCopy?: (text: string) => void;
   onCloseEdit?: () => void;
+  menuDistance?: number;
 }
 
 function tiQuCfiLuJing(cfi: string): string {
@@ -54,9 +54,9 @@ export function useHuaXianDianJi({
   huaXianList,
   onDelete,
   onChangeYanSe,
-  onChangeLeiXing,
   onCopy,
   onCloseEdit,
+  menuDistance = -30,
 }: UseHuaXianDianJiProps) {
   const [showEditMenu, setShowEditMenu] = useState(false);
   const [editPosition, setEditPosition] = useState<{ top: number; left: number } | null>(null);
@@ -64,10 +64,15 @@ export function useHuaXianDianJi({
   const [activeHuaXianList, setActiveHuaXianList] = useState<HuaXianXinXi[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const huaXianListRef = useRef(huaXianList);
+  const menuDistanceRef = useRef(menuDistance);
 
   useEffect(() => {
     huaXianListRef.current = huaXianList;
   }, [huaXianList]);
+
+  useEffect(() => {
+    menuDistanceRef.current = menuDistance;
+  }, [menuDistance]);
 
   const handleHuaXianDianJi = useCallback((xinXi: HuaXianDianJiXinXi) => {
     const list = huaXianListRef.current;
@@ -80,9 +85,12 @@ export function useHuaXianDianJi({
     const menuWidth = 220;
     const menuHeight = 120;
     const safeMargin = 20;
-
-    let menuTop = rect.top - menuHeight - 12;
-    if (menuTop < safeMargin) menuTop = rect.bottom + 12;
+    const distance = menuDistanceRef.current;
+    
+    let menuTop = rect.top - menuHeight - distance;
+    if (menuTop < safeMargin) {
+      menuTop = rect.bottom + distance;
+    }
 
     let menuLeft = rect.left + rect.width / 2;
     if (menuLeft - menuWidth / 2 < safeMargin) menuLeft = safeMargin + menuWidth / 2;
@@ -127,12 +135,6 @@ export function useHuaXianDianJi({
     setActiveHuaXian(prev => prev ? { ...prev, yanSe } : null);
   }, [activeHuaXian, onChangeYanSe]);
 
-  const handleChangeLeiXing = useCallback((leiXing: 'underline' | 'marker') => {
-    if (!activeHuaXian) return;
-    onChangeLeiXing(activeHuaXian.id, leiXing);
-    setActiveHuaXian(prev => prev ? { ...prev, leiXing } : null);
-  }, [activeHuaXian, onChangeLeiXing]);
-
   const handleCopyText = useCallback(async () => {
     if (!activeHuaXian) return;
     if (onCopy) { onCopy(activeHuaXian.text); }
@@ -153,6 +155,6 @@ export function useHuaXianDianJi({
 
   return {
     showEditMenu, editPosition, activeHuaXian, activeHuaXianList, activeId,
-    handleHuaXianDianJi, handleCloseEdit, handleDelete, handleDeleteSingle, handleChangeYanSe, handleChangeLeiXing, handleCopyText,
+    handleHuaXianDianJi, handleCloseEdit, handleDelete, handleDeleteSingle, handleChangeYanSe, handleCopyText,
   };
 }

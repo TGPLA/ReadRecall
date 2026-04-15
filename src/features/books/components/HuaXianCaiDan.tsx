@@ -11,7 +11,6 @@ interface HuaXianCaiDanProps {
   darkMode?: boolean;
   showCaretUp?: boolean;
   onHuaXian: (text: string, yanSe: HuaXianYanSe, beiZhu: string) => void;
-  onMaKeBi: (text: string, yanSe: HuaXianYanSe, beiZhu: string) => void;
   onCopy: (text: string) => void;
   onCancel: () => void;
   onXueXi?: (text: string) => void;
@@ -24,7 +23,6 @@ export function HuaXianCaiDan({
   darkMode,
   showCaretUp,
   onHuaXian,
-  onMaKeBi,
   onCopy,
   onCancel,
   onXueXi,
@@ -109,14 +107,6 @@ export function HuaXianCaiDan({
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 20h16M7 16l5-8 5 8" />
             </svg>
             划线
-          </button>
-
-          <button onClick={(e) => { e.stopPropagation(); onMaKeBi(selectedText, 'yellow', ''); }}
-            style={buttonStyle}>
-            <svg style={{ width: '1.15rem', height: '1.15rem' }} viewBox="0 0 24 24">
-              <rect x="3" y="7" width="18" height="10" rx="2" fill="#F5C842" opacity="0.85" />
-            </svg>
-            马克笔
           </button>
 
           {onXueXi && (

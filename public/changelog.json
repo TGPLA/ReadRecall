@@ -1,7 +1,13 @@
 {
   "projectName": "ReadRecall",
-  "version": "1.7.7",
+  "version": "1.7.8",
   "changelog": [
+    {
+      "version": "1.7.8",
+      "date": "2026-04-12",
+      "category": "[BugFix]",
+      "content": "修复生成题目时无法记录划线原文的问题：通过 XueXiCaiDan 菜单生成题目时，自动根据选中文本匹配划线，获取 annotation_id 并保存到数据库，使练习界面能正确显示划线原文。"
+    },
     {
       "version": "1.7.7",
       "date": "2026-04-03",

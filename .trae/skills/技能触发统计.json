@@ -1,0 +1,58 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-04-14T23:44:51.259Z",
+  "skills": {
+    "Todo管理": {
+      "triggers": [],
+      "count": 0
+    },
+    "乔布斯视角": {
+      "triggers": [],
+      "count": 0
+    },
+    "任务拆解": {
+      "triggers": [],
+      "count": 0
+    },
+    "任务闭环验证": {
+      "triggers": [],
+      "count": 0
+    },
+    "失败复盘存档": {
+      "triggers": [],
+      "count": 0
+    },
+    "头脑风暴": {
+      "triggers": [],
+      "count": 0
+    },
+    "控制台检查": {
+      "triggers": [],
+      "count": 0
+    },
+    "提示词提取器": {
+      "triggers": [],
+      "count": 0
+    },
+    "本地仓库分析器": {
+      "triggers": [],
+      "count": 0
+    },
+    "第一性原理拆解器": {
+      "triggers": [],
+      "count": 0
+    },
+    "自动部署": {
+      "triggers": [],
+      "count": 0
+    },
+    "项目文档同步": {
+      "triggers": [],
+      "count": 0
+    },
+    "项目规范守护者": {
+      "triggers": [],
+      "count": 0
+    }
+  }
+}

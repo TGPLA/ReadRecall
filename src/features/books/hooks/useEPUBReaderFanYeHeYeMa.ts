@@ -71,6 +71,7 @@ export function useEPUBReaderFanYeHeYeMa({
   }, [tiaoDaoXiaYiGe, setLocation]);
 
   const handleLocationChanged = useCallback((epubcfi: string) => {
+    console.log('useEPUBReaderFanYeHeYeMa - handleLocationChanged 被调用，epubcfi:', epubcfi);
     setLocation(epubcfi);
     gengXinYeMaXinXi();
   }, [setLocation, gengXinYeMaXinXi]);

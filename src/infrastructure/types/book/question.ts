@@ -5,7 +5,7 @@ export interface QuestionAnnotation {
   text: string;
   cfiRange: string;
   yanSe: 'yellow' | 'green' | 'blue' | 'pink';
-  leiXing: 'underline' | 'marker';
+  leiXing: 'underline';
   beiZhu: string;
 }
 

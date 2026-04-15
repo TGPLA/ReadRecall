@@ -105,6 +105,7 @@ func InitRoutes() *gin.Engine {
 			annotations.GET("/:id", controllers.GetAnnotationDetail)
 			annotations.PUT("/:id", controllers.UpdateAnnotation)
 			annotations.DELETE("/:id", controllers.DeleteAnnotation)
+			annotations.DELETE("/all-markers", controllers.DeleteAllMarkers)
 		}
 
 		statistics := api.Group("/statistics")

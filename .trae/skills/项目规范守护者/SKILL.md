@@ -1,11 +1,11 @@
 ---
-name: "项目规范守护者"
-description: "执行任何文件修改或删除操作前，必须严格遵守 .trae/rules 和 项目地图.md 的指引。Invoke before modifying/deleting files or when user asks for project operations."
+name: "项目规范与统计助手"
+description: "执行文件操作前检查规范，以及管理规则触发统计。Invoke before modifying/deleting files, or when user asks for project operations, or wants to view rule statistics."
 ---
 
-# 项目规范守护者
+# 项目规范与统计助手
 
-本 Skill 确保所有项目操作严格遵守既定规范，防止违规操作。
+本 Skill 确保所有项目操作严格遵守既定规范，防止违规操作，同时提供规则触发统计管理功能。
 
 ## 核心规则
 
@@ -82,6 +82,58 @@ src/
 2. **报告违规**：向用户说明违规内容
 3. **提供方案**：给出合规的替代方案
 4. **执行修正**：在用户确认后执行合规操作
+
+## 统计功能
+
+### 规则统计
+
+通过对话方式操作规则触发统计系统，无需记忆命令。
+
+**查看规则统计报告**
+- 用户说："查看规则统计"、"规则触发次数"、"统计报告"
+- 操作：`cd .trae/rules && node 规则触发统计.cjs report`
+
+**列出所有规则**
+- 用户说："有哪些规则"、"列出所有规则"
+- 操作：`cd .trae/rules && node 规则触发统计.cjs list`
+
+**导出规则 CSV 报告**
+- 用户说："导出统计报告"、"生成 CSV"
+- 操作：`cd .trae/rules && node 规则触发统计.cjs export`
+
+**扫描规则标记**
+- 用户说："扫描代码标记"、"更新统计数据"
+- 操作：`cd .trae/rules && node 扫描规则标记.cjs`
+
+**记录规则触发**
+- 用户说："记录规则触发"、"标记规则使用"
+- 操作：`cd .trae/rules && node 规则触发统计.cjs record "规则名称" "描述"`
+
+### 技能统计
+
+统计各技能的触发次数和使用情况。
+
+**查看技能统计报告**
+- 用户说："查看技能统计"、"技能触发次数"、"技能使用报告"
+- 操作：`cd .trae/skills && node 技能触发统计.cjs report`
+
+**列出所有技能**
+- 用户说："有哪些技能"、"列出所有技能"
+- 操作：`cd .trae/skills && node 技能触发统计.cjs list`
+
+**导出技能 CSV 报告**
+- 用户说："导出技能统计"、"生成技能 CSV"
+- 操作：`cd .trae/skills && node 技能触发统计.cjs export`
+
+**扫描技能标记**
+- 用户说："扫描技能标记"、"更新技能统计"
+- 操作：`cd .trae/skills && node 扫描技能标记.cjs`
+
+**记录技能触发**
+- 用户说："记录技能触发"、"标记技能使用"
+- 操作：`cd .trae/skills && node 技能触发统计.cjs record "技能名称" "描述"`
+
+---
 
 ## 检查清单
 

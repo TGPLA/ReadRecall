@@ -467,9 +467,26 @@ export function useEPUBReaderShiJian({
     });
     rendition.on('rendered', () => {
       fanYeHeYeMa.gengXinYeMaXinXi();
+      try {
+        const location = rendition.location;
+        if (location?.start?.cfi) {
+          console.log('rendered 事件 - 保存阅读位置:', location.start.cfi);
+          fanYeHeYeMa.handleLocationChanged(location.start.cfi);
+        }
+      } catch (e) {
+        console.warn('获取阅读位置失败:', e);
+      }
     });
-    rendition.on('relocated', () => {
+    rendition.on('relocated', (location: any) => {
       fanYeHeYeMa.gengXinYeMaXinXi();
+      try {
+        if (location?.start?.cfi) {
+          console.log('relocated 事件 - 保存阅读位置:', location.start.cfi);
+          fanYeHeYeMa.handleLocationChanged(location.start.cfi);
+        }
+      } catch (e) {
+        console.warn('获取阅读位置失败:', e);
+      }
     });
     rendition.on('error', (error: any) => {
       console.warn('epub.js 内部错误（已捕获）:', error?.message || error);

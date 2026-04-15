@@ -89,6 +89,8 @@ func DeleteAnnotation(c *gin.Context) {
 
 	db := config.GetDB()
 
+	db.Model(&models.Question{}).Where("annotation_id = ?", id).Update("annotation_id", nil)
+
 	result := db.Where("id = ? AND user_id = ?", id, userId).Delete(&models.Annotation{})
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "删除失败"})
@@ -100,4 +102,20 @@ func DeleteAnnotation(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func DeleteAllMarkers(c *gin.Context) {
+	userId := middleware.GetUserId(c)
+
+	db := config.GetDB()
+
+	db.Model(&models.Question{}).Where("annotation_id IN (SELECT id FROM annotations WHERE user_id = ? AND lei_xing = 'marker')", userId).Update("annotation_id", nil)
+
+	result := db.Where("user_id = ? AND lei_xing = 'marker'", userId).Delete(&models.Annotation{})
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "删除失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "deleted_count": result.RowsAffected})
 }

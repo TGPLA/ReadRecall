@@ -13,6 +13,7 @@ interface UseEPUBReaderHuoChuLiProps {
   onParagraphCreated?: () => void;
   onQuestionGenerated?: () => void;
   activeHuaXian?: import('@shared/services/annotationService').HuaXianXinXi | null;
+  menuDistance?: number;
 }
 
 export function useEPUBReaderHuoChuLi({ 
@@ -21,6 +22,7 @@ export function useEPUBReaderHuoChuLi({
   onParagraphCreated,
   onQuestionGenerated,
   activeHuaXian,
+  menuDistance = -30,
 }: UseEPUBReaderHuoChuLiProps) {
   const renditionRef = useRef<Rendition | undefined>(undefined);
   const bookRef = useRef<any>(null);
@@ -65,8 +67,8 @@ export function useEPUBReaderHuoChuLi({
     huaXianList: jiChu.huaXianList,
     onDelete: jiChu.handleDeleteHuaXian,
     onChangeYanSe: jiChu.handleChangeYanSe,
-    onChangeLeiXing: jiChu.handleChangeLeiXing,
     onCloseEdit: () => { handleShowMenu(false); },
+    menuDistance,
   });
 
   const {
@@ -82,11 +84,11 @@ export function useEPUBReaderHuoChuLi({
     yingYongZhuTi: jiChu.yingYongZhuTi,
     zhuTi: jiChu.zhuTi,
     ziTiDaXiao: 100,
-    setYeMaXinXi: () => {},
-    setLocation: () => {},
-    chuLiSouSuoJieGuo: () => {},
-    tiaoDaoShangYiGe: () => undefined,
-    tiaoDaoXiaYiGe: () => undefined,
+    setYeMaXinXi: jiChu.setYeMaXinXi,
+    setLocation: jiChu.setLocation,
+    chuLiSouSuoJieGuo: jiChu.chuLiSouSuoJieGuo,
+    tiaoDaoShangYiGe: jiChu.tiaoDaoShangYiGe,
+    tiaoDaoXiaYiGe: jiChu.tiaoDaoXiaYiGe,
     huaCiKaiQi,
     showMenu: showMenu,
     setSelectedText: setSelectedText,
@@ -126,7 +128,6 @@ export function useEPUBReaderHuoChuLi({
     handleCancel: jiChu.handleCancel,
     handleGenerateQuestion: jiChu.handleGenerateQuestion,
     handleHighlight: jiChu.handleHuaXian,
-    handleMarker: jiChu.handleMaKeBi,
     handleDeleteHighlight: jiChu.handleDeleteHuaXian,
     handleCopy: jiChu.handleCopy,
     renditionRef,
@@ -147,7 +148,6 @@ export function useEPUBReaderHuoChuLi({
     handleDeleteHuaXian: editMenu.handleDelete,
     handleDeleteSingleHuaXian: editMenu.handleDeleteSingle,
     handleChangeYanSe: editMenu.handleChangeYanSe,
-    handleChangeLeiXing: editMenu.handleChangeLeiXing,
     handleCopyText: editMenu.handleCopyText,
   };
 }

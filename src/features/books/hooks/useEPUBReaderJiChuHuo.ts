@@ -72,10 +72,8 @@ export function useEPUBReaderJiChuHuo({
     huaXianList,
     handleGenerateQuestion,
     handleHuaXian,
-    handleMaKeBi,
     handleDeleteHuaXian,
     handleChangeYanSe,
-    handleChangeLeiXing,
     handleCopy,
   } = useHuaXianChuTi({
     userId,
@@ -124,10 +122,8 @@ export function useEPUBReaderJiChuHuo({
     handleCancel: guanBiCaiDan,
     handleGenerateQuestion,
     handleHuaXian,
-    handleMaKeBi,
     handleDeleteHuaXian,
     handleChangeYanSe,
-    handleChangeLeiXing,
     handleCopy,
   };
 }

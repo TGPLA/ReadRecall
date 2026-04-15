@@ -16,8 +16,15 @@ export function useYueDuJinDu({ userId, bookId }: YueDuJinDuProps) {
     { defaultValue: 0 }
   );
 
+  const wrappedSetLocation = (newLocation: string | number) => {
+    console.log('useYueDuJinDu - 保存位置:', newLocation, 'storageKey:', storageKey);
+    setLocation(newLocation);
+  };
+
+  console.log('useYueDuJinDu - 读取位置:', location, 'storageKey:', storageKey);
+
   return {
     location,
-    setLocation,
+    setLocation: wrappedSetLocation,
   };
 }

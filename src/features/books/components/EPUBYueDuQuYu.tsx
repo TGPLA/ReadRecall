@@ -23,7 +23,6 @@ interface EPUBYueDuQuYuProps {
   onCancel: () => void;
   onGenerateQuestion: (text: string, type: '名词解释' | '意图理解' | '生活应用') => void;
   onHighlight: (text: string) => void;
-  onMaKeBi: (text: string) => void;
   onCopy: (text: string) => void;
   onShangYiYe?: () => void;
   onXiaYiYe?: () => void;
@@ -115,7 +114,7 @@ export function EPUBYueDuQuYu({
   url, location, onLocationChanged, onGetRendition,
   souSuoCi, onSouSuoJieGuo, selectedText, showMenu,
   selectionRect, firstLineRect, generating, onCancel, onGenerateQuestion,
-  onHighlight, onMaKeBi, onCopy, onShangYiYe, onXiaYiYe, keJian, darkMode,
+  onHighlight, onCopy, onShangYiYe, onXiaYiYe, keJian, darkMode,
   showEditMenu, editPosition, activeHuaXian, onCloseEdit,
   onDeleteHuaXian, onChangeYanSe, onCopyText, onFuShuXueXi, onGaiNianJieShi, onXueXi,
 }: EPUBYueDuQuYuProps) {
@@ -238,7 +237,6 @@ export function EPUBYueDuQuYu({
                   showCaretUp={showCaretUp}
                   darkMode={darkMode}
                   onHuaXian={onHighlight}
-                  onMaKeBi={onMaKeBi}
                   onCopy={onCopy}
                   onCancel={onCancel}
                   onXueXi={onXueXi}

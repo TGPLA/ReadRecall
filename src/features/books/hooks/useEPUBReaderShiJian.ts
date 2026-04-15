@@ -14,6 +14,7 @@ interface UseEPUBReaderShiJianProps {
   ziTiDaXiao: number;
   setYeMaXinXi: (val: string) => void;
   setLocation: (loc: string | number) => void;
+  saveImmediately?: (loc: string | number) => void;
   chuLiSouSuoJieGuo: (jieGuo: any[], rendition?: Rendition) => void;
   tiaoDaoShangYiGe: () => string | undefined;
   tiaoDaoXiaYiGe: () => string | undefined;
@@ -31,6 +32,7 @@ interface UseEPUBReaderShiJianProps {
 
 export function useEPUBReaderShiJian({
   yingYongZhuTi, zhuTi, ziTiDaXiao, setYeMaXinXi, setLocation,
+  saveImmediately,
   chuLiSouSuoJieGuo, tiaoDaoShangYiGe, tiaoDaoXiaYiGe, huaCiKaiQi,
   showMenu, setSelectedText, setShowMenu, setSelectionRect, setCurrentCfiRange,
   setFirstLineRect,
@@ -38,7 +40,7 @@ export function useEPUBReaderShiJian({
 }: UseEPUBReaderShiJianProps) {
   const fanYeHeYeMa = useEPUBReaderFanYeHeYeMa({
     setYeMaXinXi, setLocation, tiaoDaoShangYiGe, tiaoDaoXiaYiGe,
-    externalRenditionRef,
+    externalRenditionRef, saveImmediately,
   });
 
   const cfiRangeRef = useRef<string | null>(null);
@@ -470,22 +472,18 @@ export function useEPUBReaderShiJian({
       try {
         const location = rendition.location;
         if (location?.start?.cfi) {
-          console.log('rendered 事件 - 保存阅读位置:', location.start.cfi);
           fanYeHeYeMa.handleLocationChanged(location.start.cfi);
         }
       } catch (e) {
-        console.warn('获取阅读位置失败:', e);
       }
     });
     rendition.on('relocated', (location: any) => {
       fanYeHeYeMa.gengXinYeMaXinXi();
       try {
         if (location?.start?.cfi) {
-          console.log('relocated 事件 - 保存阅读位置:', location.start.cfi);
           fanYeHeYeMa.handleLocationChanged(location.start.cfi);
         }
       } catch (e) {
-        console.warn('获取阅读位置失败:', e);
       }
     });
     rendition.on('error', (error: any) => {

@@ -70,6 +70,13 @@ function xiuFuCfiGeShi(cfiRange: string): string {
 }
 
 function baoGuaSpan(rendition: Rendition, cfiRange: string, className: string, id?: string) {
+  // 检查渲染是否完成
+  const contents = rendition.getContents();
+  if (!contents || contents.length === 0) {
+    console.warn('[baoGuaSpan] 渲染未完成，跳过');
+    return;
+  }
+  
   // 先修复CFI格式
   const fixedCfi = xiuFuCfiGeShi(cfiRange);
   try {
@@ -173,6 +180,13 @@ export function useHuaXianChuTi({
       return;
     }
     
+    // 检查渲染是否完成
+    const contents = rendition.getContents();
+    if (!contents || contents.length === 0) {
+      console.warn('[yingYongBiaoJi] 渲染未完成，跳过');
+      return;
+    }
+    
     let range = null;
     try {
       range = rendition.getRange(fixedCfi);
@@ -258,6 +272,14 @@ export function useHuaXianChuTi({
       const applyBiaoJi = () => {
         if (isApplying) return;
         if (!r) return;
+        
+        // 检查渲染是否完成
+        const contents = r.getContents();
+        if (!contents || contents.length === 0) {
+          console.warn('[applyBiaoJi] 渲染未完成，推迟到 rendered 事件');
+          return;
+        }
+        
         isApplying = true;
         try {
           r.annotations.remove('highlight');

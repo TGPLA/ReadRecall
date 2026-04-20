@@ -42,10 +42,46 @@ const HL_CLASS_MAP: Record<HuaXianYanSe, string> = {
   pink: 'hl-underline-pink',
 };
 
-function baoGuaSpan(rendition: Rendition, cfiRange: string, className: string, id?: string) {
+function xiuFuCfiGeShi(cfiRange: string): string {
+  if (!cfiRange || !cfiRange.startsWith('epubcfi(')) return cfiRange;
   try {
-    const range = rendition.getRange(cfiRange);
-    if (!range || range.collapsed) return;
+    const match = cfiRange.match(/epubcfi\(([^!]+)!(.+)\)/);
+    if (!match) return cfiRange;
+    const base = match[1];
+    const pathPart = match[2];
+    const commaCount = (pathPart.match(/,/g) || []).length;
+    if (commaCount >= 2) {
+      const parts = pathPart.split(',');
+      if (parts.length >= 3) {
+        const commonPath = parts[0];
+        const startRest = parts[1];
+        const endPart = parts[2];
+        const fixedStart = commonPath + startRest;
+        const fixedEnd = commonPath + endPart;
+        const fixedCfi = `epubcfi(${base}!${fixedStart},${fixedEnd})`;
+        console.log('修复CFI格式:', cfiRange, '->', fixedCfi);
+        return fixedCfi;
+      }
+    }
+  } catch (e) {
+    console.warn('CFI格式修复失败:', e);
+  }
+  return cfiRange;
+}
+
+function baoGuaSpan(rendition: Rendition, cfiRange: string, className: string, id?: string) {
+  // 先修复CFI格式
+  const fixedCfi = xiuFuCfiGeShi(cfiRange);
+  try {
+    const range = rendition.getRange(fixedCfi);
+    if (!range || range.collapsed) {
+      console.warn('[baoGuaSpan] getRange 返回无效 range, cfiRange:', cfiRange);
+      return;
+    }
+    console.log('[baoGuaSpan] getRange 成功, startContainer:', range.startContainer?.nodeType, 'endContainer:', range.endContainer?.nodeType);
+    console.log('[baoGuaSpan] startOffset:', range.startOffset, 'endOffset:', range.endOffset);
+    console.log('[baoGuaSpan] startContainer内容:', range.startContainer?.textContent?.substring(0, 30));
+    console.log('[baoGuaSpan] endContainer内容:', range.endContainer?.textContent?.substring(0, 30));
     const doc = range.commonAncestorContainer.ownerDocument as Document;
     const span = doc.createElement('span');
     span.className = className;
@@ -56,12 +92,34 @@ function baoGuaSpan(rendition: Rendition, cfiRange: string, className: string, i
     const endContainer = range.endContainer;
     if (startContainer === endContainer && startContainer.nodeType === Node.TEXT_NODE) {
       range.surroundContents(span);
+      console.log('[baoGuaSpan] 同节点文本选区，使用surroundContents');
       return;
     }
-    const fragment = range.extractContents();
-    span.appendChild(fragment);
-    range.insertNode(span);
+    // 跨节点选区：使用更安全的方法
+    console.log('[baoGuaSpan] 跨节点选区,startContainerType:', startContainer?.nodeType, 'endContainerType:', endContainer?.nodeType);
+    try {
+      // 保存起始位置（在extractContents之前）
+      const originalStartContainer = range.startContainer;
+      const originalStartOffset = range.startOffset;
+      
+      const fragment = range.extractContents();
+      span.appendChild(fragment);
+      
+      // 在原始起始位置创建新range插入span
+      const insertRange = doc.createRange();
+      insertRange.setStart(originalStartContainer, originalStartOffset);
+      insertRange.setEnd(originalStartContainer, originalStartOffset);
+      insertRange.insertNode(span);
+      
+      // 验证span是否插入成功
+      console.log('[baoGuaSpan] span元素:', span.outerHTML?.substring(0, 100));
+      console.log('[baoGuaSpan] span父元素:', span.parentNode?.nodeName);
+      console.log('[baoGuaSpan] 跨节点处理完成');
+    } catch (e) {
+      console.warn('[baoGuaSpan] 跨节点处理失败:', e);
+    }
   } catch (e) {
+    console.warn('baoGuaSpan 失败:', e);
   }
 }
 
@@ -87,13 +145,11 @@ export function useHuaXianChuTi({
   }, [userId]);
 
   const huoQuBiaoZhu = useCallback(async () => {
-    console.log('从后端获取划线数据，bookId:', bookId);
     const { annotations, error } = await annotationService.getAnnotationsByBook(bookId);
     if (error) {
       console.error('获取划线失败:', error);
       return;
     }
-    console.log('从后端获取到的划线数据:', annotations);
     setHuaXianList(annotations);
     huaXianListRef.current = annotations;
     setLoading(false);
@@ -108,32 +164,50 @@ export function useHuaXianChuTi({
   }, [huaXianList]);
 
   const yingYongBiaoJi = useCallback(async (cfiRange: string, qingChuJiu: boolean = false, yanSe: HuaXianYanSe = 'blue', id?: string) => {
+    console.log('[yingYongBiaoJi] 收到CFI:', cfiRange);
+    const fixedCfi = xiuFuCfiGeShi(cfiRange);
+    console.log('[yingYongBiaoJi] 修复后CFI:', fixedCfi);
     const rendition = renditionRef?.current;
     if (!rendition) {
       console.error('应用标记失败: rendition 不存在');
       return;
     }
+    
+    let range = null;
+    try {
+      range = rendition.getRange(fixedCfi);
+      console.log('[yingYongBiaoJi] getRange结果:', range ? '成功' : '失败', range?.collapsed ? '(collapsed)' : '');
+    } catch (e) {
+      console.warn('getRange 失败:', e);
+    }
+    
+    if (!range || range.collapsed) {
+      console.warn('CFI无效，跳过应用标记:', cfiRange);
+      return;
+    }
+    
     if (qingChuJiu) {
       rendition.annotations.remove('highlight');
     }
     const se = YAN_SE_PEI_ZHI[yanSe];
     const cls = HL_CLASS_MAP[yanSe];
     const svgStyle = { fill: se, 'fill-opacity': '0', stroke: se, 'stroke-width': '0', 'stroke-dasharray': 'none' };
-    rendition.annotations.add('highlight', cfiRange, {}, () => {}, cls, svgStyle);
-    baoGuaSpan(rendition, cfiRange, cls, id);
+    try {
+      rendition.annotations.add('highlight', fixedCfi, {}, () => {}, cls, svgStyle);
+    } catch (e) {
+      console.warn('annotations.add 失败:', e, 'CFI:', fixedCfi);
+    }
+    baoGuaSpan(rendition, fixedCfi, cls, id);
   }, [renditionRef]);
 
   useEffect(() => {
-    console.log('useHuaXianChuTi useEffect 执行', { userId, bookId });
     let rendition = renditionRef?.current;
     let checkRenditionInterval: ReturnType<typeof setInterval> | null = null;
     
     if (!rendition) {
-      console.log('rendition 不存在，开始轮询');
       checkRenditionInterval = setInterval(() => {
         rendition = renditionRef?.current;
         if (rendition) {
-          console.log('rendition 已获取成功，设置监听器');
           if (checkRenditionInterval) {
             clearInterval(checkRenditionInterval);
             checkRenditionInterval = null;
@@ -142,7 +216,6 @@ export function useHuaXianChuTi({
         }
       }, 100);
     } else {
-      console.log('rendition 已存在，直接设置监听器');
       applyBiaoJiRef.current = setupRenditionListener(rendition);
     }
 
@@ -166,7 +239,6 @@ export function useHuaXianChuTi({
                 }
               });
               const sousuoGaoLiang = doc.querySelectorAll('.search-highlight');
-              console.log('搜索高亮清理: 找到', sousuoGaoLiang.length, '个');
               sousuoGaoLiang.forEach(span => {
                 if (span.parentNode) {
                   const parent = span.parentNode;
@@ -184,11 +256,7 @@ export function useHuaXianChuTi({
       };
 
       const applyBiaoJi = () => {
-        if (isApplying) {
-          console.log('applyBiaoJi 正在执行中，跳过本次调用');
-          return;
-        }
-        console.log('applyBiaoJi 被调用');
+        if (isApplying) return;
         if (!r) return;
         isApplying = true;
         try {
@@ -196,34 +264,36 @@ export function useHuaXianChuTi({
           qingLiDOMBiaoJi();
           
           const currentData = huaXianListRef.current;
-          console.log('当前划线数据:', { count: currentData.length, data: currentData });
-          
-          if (currentData.length === 0) {
-            console.log('没有划线数据可应用');
-            return;
-          }
+          if (currentData.length === 0) return;
           
           const quChong = currentData.filter((h, index, self) =>
             index === self.findIndex((item) => item.cfiRange === h.cfiRange && item.leiXing === h.leiXing)
           );
-          console.log('去重后的划线数量:', quChong.length);
-          quChong.forEach((h, idx) => {
-            console.log(`应用划线 ${idx + 1}/${quChong.length}:`, h.text?.substring(0, 30));
-            if (!h.cfiRange) {
-            console.warn('划线没有 cfiRange，跳过:', h);
-            return;
-          }
-          const se = YAN_SE_PEI_ZHI[h.yanSe] || YAN_SE_PEI_ZHI.blue;
-          const cls = HL_CLASS_MAP[h.yanSe] || HL_CLASS_MAP.blue;
-          const svgStyle = { fill: se, 'fill-opacity': '0', stroke: se, 'stroke-width': '0', 'stroke-dasharray': 'none' };
-          try {
-            r.annotations.add('highlight', h.cfiRange, {}, () => {}, cls, svgStyle);
-            console.log('annotations.add 成功');
-          } catch (e) { console.warn('annotations.add 失败:', e, 'CFI:', h.cfiRange); }
-          try {
-            baoGuaSpan(r, h.cfiRange, cls, h.id);
-            console.log('baoGuaSpan 成功');
-          } catch (e) { }
+          quChong.forEach((h) => {
+            if (!h.cfiRange) return;
+            
+            // 修复CFI格式
+            const fixedCfi = xiuFuCfiGeShi(h.cfiRange);
+            let range = null;
+            try {
+              range = r.getRange(fixedCfi);
+            } catch (e) {
+              console.warn('getRange 失败:', e);
+            }
+            if (!range) {
+              console.warn('已有划线CFI无效，跳过:', h.cfiRange);
+              return;
+            }
+            
+            const se = YAN_SE_PEI_ZHI[h.yanSe] || YAN_SE_PEI_ZHI.blue;
+            const cls = HL_CLASS_MAP[h.yanSe] || HL_CLASS_MAP.blue;
+            const svgStyle = { fill: se, 'fill-opacity': '0', stroke: se, 'stroke-width': '0', 'stroke-dasharray': 'none' };
+            try {
+              r.annotations.add('highlight', fixedCfi, {}, () => {}, cls, svgStyle);
+            } catch (e) { console.warn('annotations.add 失败:', e, 'CFI:', fixedCfi); }
+            try {
+              baoGuaSpan(r, fixedCfi, cls, h.id);
+            } catch (e) { }
           });
         } finally {
           isApplying = false;
@@ -245,9 +315,7 @@ export function useHuaXianChuTi({
   }, [userId, bookId, chapterId, renditionRef]);
 
   useEffect(() => {
-    console.log('huaXianList 已更新，数量:', huaXianList.length);
     if (applyBiaoJiRef.current) {
-      console.log('huaXianList 变化，重新应用划线');
       applyBiaoJiRef.current();
     }
   }, [huaXianList]);
@@ -256,18 +324,13 @@ export function useHuaXianChuTi({
     if (!selectedText.trim()) return;
     setGenerating(true);
     try {
-      console.log('[DEBUG handleGenerateQuestion] 开始生成题目, selectedText:', selectedText.substring(0, 30));
-      console.log('[DEBUG handleGenerateQuestion] 传入参数 chapterId:', chapterId, 'bookId:', bookId);
-      console.log('[DEBUG handleGenerateQuestion] activeHuaXian:', activeHuaXian);
       const annotationId = activeHuaXian?.id;
       const { data, error } = await aiService.generateFromSelectionAuto(chapterId || '', bookId, selectedText, 1, annotationId);
-      console.log('[DEBUG handleGenerateQuestion] 生成结果:', { data, error });
       if (error) {
         showError('AI 出题失败：' + error);
         return;
       }
       showSuccess(`已生成 1 道${data?.questionType || ''}题目`);
-      console.log('[DEBUG handleGenerateQuestion] 调用 onQuestionGenerated');
       onQuestionGenerated?.();
       onClose();
     } finally {
@@ -276,10 +339,13 @@ export function useHuaXianChuTi({
   }, [chapterId, bookId, onClose, onQuestionGenerated, activeHuaXian]);
 
   const handleHuaXian = useCallback(async (selectedText: string, yanSe: HuaXianYanSe = 'blue', beiZhu: string = '') => {
-    console.log('handleHuaXian 被调用', { selectedText, yanSe, beiZhu });
     const cfiRange = huaCiJiaoHuRef?.getCurrentCfiRange?.() || '';
+    console.log('[handleHuaXian] 收到CFI:', cfiRange);
+    console.log('[handleHuaXian] 选中文本:', selectedText);
     
-    const existingUnderline = huaXianList.find(h => h.cfiRange === cfiRange);
+    // 检查是否已存在相同的划线
+    const fixedCfi = xiuFuCfiGeShi(cfiRange);
+    const existingUnderline = huaXianList.find(h => h.cfiRange === fixedCfi);
     if (existingUnderline) {
       showError('该文本已有划线，请先删除后再重新操作');
       onClose();
@@ -289,7 +355,7 @@ export function useHuaXianChuTi({
     const { annotation, error } = await annotationService.createAnnotation({
       bookId,
       text: selectedText,
-      cfiRange,
+      cfiRange: fixedCfi,
       yanSe,
       leiXing: 'underline',
       beiZhu,
@@ -302,7 +368,7 @@ export function useHuaXianChuTi({
 
     if (annotation) {
       setHuaXianList(prev => [...prev, annotation]);
-      huaXianListRef.current = [...huaXianList, annotation];
+      huaXianListRef.current = [...huaXianListRef.current, annotation];
       
       if (cfiRange) yingYongBiaoJi(cfiRange, false, yanSe, annotation.id);
       huaCiJiaoHuRef?.setCurrentCfiRange?.(null);
@@ -316,6 +382,7 @@ export function useHuaXianChuTi({
     const rendition = renditionRef?.current;
     
     if (rendition && deleted?.cfiRange) {
+      // 直接使用原始CFI（3部分格式是正确的）
       try {
         rendition.annotations.remove(deleted.cfiRange, 'highlight');
       } catch (error) {
@@ -348,7 +415,7 @@ export function useHuaXianChuTi({
     }
 
     setHuaXianList(prev => prev.filter(h => h.id !== id));
-    huaXianListRef.current = huaXianList.filter(h => h.id !== id);
+    huaXianListRef.current = huaXianListRef.current.filter(h => h.id !== id);
     showSuccess('已删除标记');
   }, [huaXianList, renditionRef]);
 

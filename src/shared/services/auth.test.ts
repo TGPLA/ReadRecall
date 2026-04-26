@@ -65,6 +65,13 @@ describe('前端认证服务测试', () => {
       const 模拟响应 = {
         ok: true,
         status: 200,
+        text: async () => JSON.stringify({
+          success: true,
+          data: {
+            user: { id: 1, username: '10001', nickname: '用户10001' },
+            token: 'mock-jwt-token'
+          }
+        }),
         json: async () => ({
           success: true,
           data: {
@@ -90,6 +97,10 @@ describe('前端认证服务测试', () => {
       const 模拟响应 = {
         ok: false,
         status: 401,
+        text: async () => JSON.stringify({
+          success: false,
+          error: '用户名或密码错误'
+        }),
         json: async () => ({
           success: false,
           error: '用户名或密码错误'
@@ -110,6 +121,10 @@ describe('前端认证服务测试', () => {
       const 模拟响应 = {
         ok: false,
         status: 401,
+        text: async () => JSON.stringify({
+          success: false,
+          error: '用户名或密码错误'
+        }),
         json: async () => ({
           success: false,
           error: '用户名或密码错误'
@@ -130,6 +145,13 @@ describe('前端认证服务测试', () => {
       const 模拟响应 = {
         ok: true,
         status: 200,
+        text: async () => JSON.stringify({
+          success: true,
+          data: {
+            user: { id: 1, username: '10001', nickname: '测试用户' },
+            token: 'mock-jwt-token'
+          }
+        }),
         json: async () => ({
           success: true,
           data: {
@@ -166,6 +188,10 @@ describe('前端认证服务测试', () => {
       const 模拟响应 = {
         ok: false,
         status: 400,
+        text: async () => JSON.stringify({
+          success: false,
+          error: '该用户名已被注册'
+        }),
         json: async () => ({
           success: false,
           error: '该用户名已被注册'
@@ -186,6 +212,13 @@ describe('前端认证服务测试', () => {
       const 模拟响应 = {
         ok: true,
         status: 200,
+        text: async () => JSON.stringify({
+          success: true,
+          data: {
+            user: { id: 2, username: '10002', nickname: '用户10002' },
+            token: 'mock-jwt-token-new'
+          }
+        }),
         json: async () => ({
           success: true,
           data: {
@@ -218,6 +251,13 @@ describe('前端认证服务测试', () => {
       const 模拟响应 = {
         ok: true,
         status: 200,
+        text: async () => JSON.stringify({
+          success: true,
+          data: {
+            user: { id: 1, username: '10001', nickname: 'test' },
+            token: 'saved-jwt-token'
+          }
+        }),
         json: async () => ({
           success: true,
           data: {

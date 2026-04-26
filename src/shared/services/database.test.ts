@@ -10,6 +10,7 @@ function 模拟Fetch响应(数据: unknown, 状态码 = 200) {
   return Promise.resolve({
     ok: 状态码 >= 200 && 状态码 < 300,
     status: 状态码,
+    text: () => Promise.resolve(JSON.stringify(数据)),
     json: () => Promise.resolve(数据),
   } as Response)
 }
@@ -40,10 +41,18 @@ describe('书籍管理功能测试', () => {
       }
 
       const 模拟响应数据 = {
-        id: 'test-book-' + Date.now(),
-        ...测试书籍,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
+        success: true,
+        data: {
+          id: 'test-book-' + Date.now(),
+          user_id: 测试用户ID,
+          title: 测试书籍.title,
+          author: 测试书籍.author,
+          chapter_count: 0,
+          question_count: 0,
+          mastered_count: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
       }
 
       global.fetch = vi.fn().mockResolvedValueOnce(模拟Fetch响应(模拟响应数据, 201))
@@ -134,14 +143,18 @@ describe('书籍管理功能测试', () => {
       }
 
       const 模拟响应数据 = {
-        id: 书籍ID,
-        userId: 测试用户ID,
-        title: 更新数据.title,
-        author: 更新数据.author,
-        questionCount: 0,
-        masteredCount: 0,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
+        success: true,
+        data: {
+          id: 书籍ID,
+          user_id: 测试用户ID,
+          title: 更新数据.title,
+          author: 更新数据.author,
+          chapter_count: 0,
+          question_count: 0,
+          mastered_count: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
       }
 
       global.fetch = vi.fn().mockResolvedValueOnce(模拟Fetch响应(模拟响应数据))

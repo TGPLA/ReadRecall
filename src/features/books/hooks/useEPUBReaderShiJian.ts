@@ -290,21 +290,27 @@ export function useEPUBReaderShiJian({
       contents.window.document.head.appendChild(huaXianProxyScript);
 
       function handleIframeClick(e: Event) {
-        var target = (e as any).target;
-        if (target && target.closest && target.closest('[data-biaoji]')) { return; }
-        if (yiZhiXiaYiGeClickRef.current) { yiZhiXiaYiGeClickRef.current = false; return; }
-        if (!showMenuRef.current) { return; }
-        const rend = fanYeHeYeMa.renditionRef.current;
-        if (rend && linshiBiaoZhuCfiRef.current) {
-          try { rend.annotations.remove(linshiBiaoZhuCfiRef.current, 'temp-selection'); } catch {}
-          linshiBiaoZhuCfiRef.current = null;
-        }
-        setShowMenu(false);
-        setSelectedText('');
-        setSelectionRect(null);
-        setCurrentCfiRange(null);
-        if (setFirstLineRect) setFirstLineRect(null);
-      }
+    console.log('[调试] handleIframeClick 被调用', e);
+    var target = (e as any).target;
+    if (target && target.closest && target.closest('[data-biaoji]')) { return; }
+    // 清除可能残留的标记
+    yiZhiXiaYiGeClickRef.current = false;
+    if (!showMenuRef.current) { 
+      console.log('[调试] handleIframeClick: 菜单未显示，不执行任何操作');
+      return; 
+    }
+    console.log('[调试] handleIframeClick: 关闭菜单');
+    const rend = fanYeHeYeMa.renditionRef.current;
+    if (rend && linshiBiaoZhuCfiRef.current) {
+      try { rend.annotations.remove(linshiBiaoZhuCfiRef.current, 'temp-selection'); } catch {}
+      linshiBiaoZhuCfiRef.current = null;
+    }
+    setShowMenu(false);
+    setSelectedText('');
+    setSelectionRect(null);
+    setCurrentCfiRange(null);
+    if (setFirstLineRect) setFirstLineRect(null);
+  }
 
       contents.window.addEventListener('click', handleIframeClick);
 
@@ -316,7 +322,8 @@ export function useEPUBReaderShiJian({
         if (!text || text.length < ZUI_XIAO_WEN_ZI_SHU) return;
         if (showMenuRef.current) return;
         showMenuRef.current = true;
-        yiZhiXiaYiGeClickRef.current = true;
+        // 移除这个标记，因为它会导致第一次点击翻页按钮失效
+        // yiZhiXiaYiGeClickRef.current = true;
         setShowMenu(true);
       }
 
@@ -386,22 +393,27 @@ export function useEPUBReaderShiJian({
       };
     });
     rendition.on('rendered', () => {
+      console.log('[调试] rendition: rendered 事件触发');
       fanYeHeYeMa.gengXinYeMaXinXi();
       try {
         const location = rendition.location;
+        console.log('[调试] rendition: rendered 中的 location', location);
         if (location?.start?.cfi) {
           fanYeHeYeMa.handleLocationChanged(location.start.cfi);
         }
       } catch (e) {
+        console.error('[调试] rendition: rendered 出错', e);
       }
     });
     rendition.on('relocated', (location: any) => {
+      console.log('[调试] rendition: relocated 事件触发，location:', location);
       fanYeHeYeMa.gengXinYeMaXinXi();
       try {
         if (location?.start?.cfi) {
           fanYeHeYeMa.handleLocationChanged(location.start.cfi);
         }
       } catch (e) {
+        console.error('[调试] rendition: relocated 出错', e);
       }
     });
     rendition.on('error', (error: any) => {

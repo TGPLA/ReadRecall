@@ -13,6 +13,7 @@ import { EPUBDaoRuTanChuang } from './EPUBDaoRuTanChuang';
 import type { EPUBMetadata, EPUBChapter } from '@shared/utils/epubParser';
 import { BookShelfCaoZuo } from './BookShelfCaoZuo';
 import { BookShieKongZhi } from './BookShieKongZhi';
+import { ShanChuQueRenTanChuang } from './ShanChuQueRenTanChuang';
 
 interface BookShelfProps {
   onSelectBook: (book: Book) => void;
@@ -25,13 +26,29 @@ export function BookShelf({ onSelectBook, onOpenSettings }: BookShelfProps) {
   const [showEPUBModal, setShowEPUBModal] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | undefined>();
   const [importing, setImporting] = useState(false);
+  const [shanChuTiShi, setShanChuTiShi] = useState<{ bookId: string; bookTitle: string } | null>(null);
 
-  const handleDeleteBook = async (bookId: string, bookTitle: string) => {
-    const confirmed = window.confirm(`确定要删除《${bookTitle}》吗？`);
-    if (!confirmed) return;
-    try { await deleteBook(bookId); showSuccess('书籍删除成功'); }
-    catch (error) { showError(error instanceof Error ? error.message : '删除失败'); }
+  const handleShanChuQueRen = (bookId: string, bookTitle: string) => {
+    setShanChuTiShi({ bookId, bookTitle });
   };
+
+  const handleShanChuQueDing = async () => {
+    if (!shanChuTiShi) return;
+    try { 
+      await deleteBook(shanChuTiShi.bookId); 
+      showSuccess('书籍删除成功'); 
+    }
+    catch (error) { showError(error instanceof Error ? error.message : '删除失败'); }
+    finally { setShanChuTiShi(null); }
+  };
+
+  const handleShanChuQuXiao = () => {
+    setShanChuTiShi(null);
+  };
+
+  const shanChuTiShiBiaoTi = shanChuTiShi 
+    ? `《${shanChuTiShi.bookTitle}》已删除` 
+    : '';
 
   const handleEditBook = (book: Book) => { setEditingBook(book); setShowAddModal(true); };
   const handleCloseModal = () => { setShowAddModal(false); setEditingBook(undefined); };
@@ -69,10 +86,23 @@ export function BookShelf({ onSelectBook, onOpenSettings }: BookShelfProps) {
           <BookShieKongZhi darkMode={settings.darkMode} onAddBook={() => { setEditingBook(undefined); setShowAddModal(true); }} onImportEPUB={() => setShowEPUBModal(true)} />
         ) : (
           <div style={gridStyle}>
-            {books.map(book => <BookCard key={book.id} book={book} onClick={() => onSelectBook(book)} onDelete={() => handleDeleteBook(book.id, book.title)} onEdit={() => handleEditBook(book)} darkMode={settings.darkMode} />)}
+            {books.map(book => <BookCard key={book.id} book={book} onClick={() => onSelectBook(book)} onDelete={() => handleShanChuQueRen(book.id, book.title)} onEdit={() => handleEditBook(book)} darkMode={settings.darkMode} />)}
           </div>
         )}
       </div>
+
+      {shanChuTiShi && (
+        <ShanChuQueRenTanChuang
+          title="删除书籍"
+          content={`确定要删除《${shanChuTiShi.bookTitle}》吗？此操作不可恢复。`}
+          confirmText="删除"
+          cancelText="取消"
+          onConfirm={handleShanChuQueDing}
+          onCancel={handleShanChuQuXiao}
+          darkMode={settings.darkMode}
+          isDestructive={true}
+        />
+      )}
 
       <AddBookModal key={editingBook?.id || 'new'} isOpen={showAddModal} onClose={handleCloseModal} book={editingBook} darkMode={settings.darkMode} />
       <EPUBDaoRuTanChuang isOpen={showEPUBModal} onClose={() => setShowEPUBModal(false)} onConfirm={() => setShowEPUBModal(false)} onRefreshBooks={refreshBooks} darkMode={settings.darkMode} />

@@ -6,7 +6,7 @@ import type { HuaXianYanSe } from '../hooks/useHuaXianChuTi';
 import type { HuaXianXinXi } from '@shared/services/annotationService';
 import type { NavItem } from 'epubjs';
 import { paraphraseService, type ParaphraseRecord } from '@shared/services/paraphraseService';
-import { showError } from '@shared/utils/common/ToastTiShi';
+import { showError, showSuccess } from '@shared/utils/common/ToastTiShi';
 
 interface BiJiChouTiProps {
   highlights: HuaXianXinXi[];
@@ -71,9 +71,6 @@ export function BiJiChouTi({ highlights, bookId, onDelete, onJump, onGuanBi, zha
   };
 
   const shanChuFuShu = async (id: string) => {
-    const queDing = confirm('确定要删除这条复述记录吗？');
-    if (!queDing) return;
-
     try {
       const { error } = await paraphraseService.deleteParaphrase(id);
       if (error) {
@@ -81,8 +78,10 @@ export function BiJiChouTi({ highlights, bookId, onDelete, onJump, onGuanBi, zha
         return;
       }
       setFuShuJiLu(prev => prev.filter(r => r.id !== id));
+      showSuccess('删除成功');
     } catch (e) {
       console.error('删除复述记录失败:', e);
+      showError('删除失败，请稍后重试');
     }
   };
 

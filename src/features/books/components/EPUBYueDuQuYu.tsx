@@ -246,7 +246,11 @@ export function EPUBYueDuQuYu({
         {keJian && (onShangYiYe || onXiaYiYe) && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', flexShrink: 0 }}>
             {onShangYiYe && (
-              <button onClick={onShangYiYe} style={anNiuYangShi}
+              <button onClick={(e) => { 
+                console.log('[调试] 上一页按钮被点击'); 
+                e.stopPropagation(); 
+                onShangYiYe(); 
+              }} style={anNiuYangShi}
                 onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
                 onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}>
@@ -255,7 +259,11 @@ export function EPUBYueDuQuYu({
             )}
             <div />
             {onXiaYiYe && (
-              <button onClick={onXiaYiYe} style={anNiuYangShi}
+              <button onClick={(e) => { 
+                console.log('[调试] 下一页按钮被点击'); 
+                e.stopPropagation(); 
+                onXiaYiYe(); 
+              }} style={anNiuYangShi}
                 onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
                 onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}>

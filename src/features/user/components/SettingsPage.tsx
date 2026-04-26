@@ -9,6 +9,7 @@ import { getResponsiveValue } from '@shared/utils/responsive';
 import { ZhangHuXinXi } from './ZhangHuXinXi';
 import { XiuGaiMiMaTanChuang } from './XiuGaiMiMaTanChuang';
 import { showSuccess } from '@shared/utils/common/ToastTiShi';
+import { ShanChuQueRenTanChuang } from '../../books/components/ShanChuQueRenTanChuang';
 
 interface SettingsPageProps {
   onBack: () => void;
@@ -33,6 +34,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   const [version, setVersion] = useState('加载中...');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(authService.getCurrentUser());
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     const unsubscribe = authService.onAuthChange((user) => setCurrentUser(user));
@@ -56,20 +58,27 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
     const newSettings = { ...formData, darkMode: !formData.darkMode };
     setFormData(newSettings);
     updateSettings(newSettings);
+    showSuccess(newSettings.darkMode ? '已切换到深色模式' : '已切换到浅色模式');
   };
 
   const handleLogout = async () => {
-    const confirmed = await confirm('确定要退出登录吗？');
-    if (confirmed) {
-      setLoggingOut(true);
-      const { error } = await authService.signOut();
-      if (error) {
-        alert(`登出失败：${error.message}`);
-      } else {
-        onBack();
-      }
-      setLoggingOut(false);
+    setShowLogoutConfirm(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setLoggingOut(true);
+    const { error } = await authService.signOut();
+    if (error) {
+      showSuccess('登出失败：' + error.message);
+    } else {
+      onBack();
     }
+    setLoggingOut(false);
+    setShowLogoutConfirm(false);
+  };
+
+  const handleLogoutCancel = () => {
+    setShowLogoutConfirm(false);
   };
 
   const handleChangePassword = async (newPassword: string) => {
@@ -99,6 +108,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                 <p style={{ fontWeight: 500, color: settings.darkMode ? '#f9fafb' : '#111827' }}>深色模式</p>
                 <p style={{ fontSize: '0.875rem', color: settings.darkMode ? '#9ca3af' : '#6b7280' }}>切换深色/浅色主题</p>
               </div>
+
               <button onClick={handleToggleDarkMode} style={{ position: 'relative', width: '3.5rem', height: '1.75rem', borderRadius: '9999px', backgroundColor: formData.darkMode ? '#3b82f6' : '#d1d5db', border: 'none', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: formData.darkMode ? '0 0 20px rgba(59, 130, 246, 0.4)' : '0 0 20px rgba(209, 213, 219, 0.4)' }}>
                 <span style={{ position: 'absolute', top: '0.25rem', left: formData.darkMode ? '1.75rem' : '0.25rem', width: '1.25rem', height: '1.25rem', backgroundColor: '#ffffff', borderRadius: '9999px', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {formData.darkMode ? (
@@ -149,6 +159,18 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
         </div>
 
         {showPasswordModal && <XiuGaiMiMaTanChuang darkMode={settings.darkMode} onClose={() => setShowPasswordModal(false)} onConfirm={handleChangePassword} />}
+
+        {showLogoutConfirm && (
+          <ShanChuQueRenTanChuang
+            title="退出登录"
+            content="确定要退出当前账号吗？"
+            confirmText="退出"
+            cancelText="取消"
+            onConfirm={handleLogoutConfirm}
+            onCancel={handleLogoutCancel}
+            darkMode={settings.darkMode}
+          />
+        )}
       </div>
     </div>
   );

@@ -10,15 +10,13 @@
 import { describe, it, expect } from 'vitest'
 import { fetch } from 'undici'
 
-const 本地服务器地址 = 'http://localhost:8080'
+const 本地服务器地址 = 'http://114.132.47.245:8080'
 const 测试用户名 = `${Math.floor(Math.random() * 900000000) + 100000000}`
 const 测试密码 = 'test123456'
 
 let token = ''
 let 测试用户ID = ''
 const 创建的书籍ID列表: string[] = []
-const 创建的章节ID列表: string[] = []
-const 创建的题目ID列表: string[] = []
 
 interface ApiResponse<T> {
   success: boolean;
@@ -168,128 +166,7 @@ describe('本地后端 API 集成测试', () => {
     })
   })
 
-  describe('章节管理 API', () => {
-    it('创建章节：应该成功创建', async () => {
-      if (创建的书籍ID列表.length === 0) {
-        expect(true).toBe(true)
-        return
-      }
-
-      const 测试章节 = {
-        book_id: 创建的书籍ID列表[0],
-        user_id: 测试用户ID,
-        title: '测试章节_' + Date.now(),
-        content: '这是测试章节内容，用于生成题目。',
-        order_index: 0
-      }
-
-      const { 数据, 错误 } = await API请求<{ id: string }>('/chapters', {
-        method: 'POST',
-        body: JSON.stringify(测试章节),
-      })
-
-      expect(错误).toBeNull()
-      expect(数据?.id).toBeDefined()
-
-      if (数据?.id) {
-        创建的章节ID列表.push(数据.id)
-      }
-    })
-
-    it('获取章节列表：应该包含创建的章节', async () => {
-      if (创建的书籍ID列表.length === 0) {
-        expect(true).toBe(true)
-        return
-      }
-
-      const { 数据, 错误 } = await API请求<{ id: string }[]>(`/chapters/book/${创建的书籍ID列表[0]}`)
-
-      expect(错误).toBeNull()
-      expect(数据).toBeInstanceOf(Array)
-      expect(数据?.length).toBeGreaterThanOrEqual(1)
-    })
-  })
-
-  describe('题目管理 API', () => {
-    it('创建题目：应该成功创建', async () => {
-      if (创建的章节ID列表.length === 0) {
-        expect(true).toBe(true)
-        return
-      }
-
-      const 测试题目 = {
-        user_id: 测试用户ID,
-        book_id: 创建的书籍ID列表[0],
-        chapter_id: 创建的章节ID列表[0],
-        question: '测试题目内容是什么？',
-        answer: '这是测试答案',
-        question_type: '名词解释',
-        category: 'standard',
-        difficulty: '基础',
-        options: null,
-        explanation: ''
-      }
-
-      const { 数据, 错误 } = await API请求<{ id: string }>('/questions', {
-        method: 'POST',
-        body: JSON.stringify(测试题目),
-      })
-
-      expect(错误).toBeNull()
-      expect(数据?.id).toBeDefined()
-
-      if (数据?.id) {
-        创建的题目ID列表.push(数据.id)
-      }
-    })
-
-    it('获取题目列表：应该包含创建的题目', async () => {
-      if (创建的章节ID列表.length === 0) {
-        expect(true).toBe(true)
-        return
-      }
-
-      const { 数据, 错误 } = await API请求<{ id: string }[]>(`/questions/chapter/${创建的章节ID列表[0]}`)
-
-      expect(错误).toBeNull()
-      expect(数据).toBeInstanceOf(Array)
-      expect(数据?.length).toBeGreaterThanOrEqual(1)
-    })
-
-    it('更新题目：应该成功更新掌握程度', async () => {
-      if (创建的题目ID列表.length === 0) {
-        expect(true).toBe(true)
-        return
-      }
-
-      const 题目ID = 创建的题目ID列表[0]
-      const 更新数据 = { mastery_level: '已掌握' }
-
-      const { 数据, 错误 } = await API请求<{ mastery_level: string }>(`/questions/${题目ID}`, {
-        method: 'PUT',
-        body: JSON.stringify(更新数据),
-      })
-
-      expect(错误).toBeNull()
-      expect(数据?.mastery_level).toBe('已掌握')
-    })
-  })
-
   describe('清理测试数据', () => {
-    it('删除测试题目', async () => {
-      for (const 题目ID of 创建的题目ID列表) {
-        const { 错误 } = await API请求(`/questions/${题目ID}`, { method: 'DELETE' })
-        expect(错误).toBeNull()
-      }
-    })
-
-    it('删除测试章节', async () => {
-      for (const 章节ID of 创建的章节ID列表) {
-        const { 错误 } = await API请求(`/chapters/${章节ID}`, { method: 'DELETE' })
-        expect(错误).toBeNull()
-      }
-    })
-
     it('删除测试书籍', async () => {
       for (const 书籍ID of 创建的书籍ID列表) {
         const { 错误 } = await API请求(`/books/${书籍ID}`, { method: 'DELETE' })

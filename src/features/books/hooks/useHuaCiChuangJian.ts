@@ -10,7 +10,7 @@ export interface HuaXianZhuangTai {
   enabled: boolean;
 }
 
-export function useHuaCiJiaoHu(enabled: boolean) {
+export function useHuaCiJiaoHu(__enabled: boolean) {
   const [selectedText, setSelectedText] = useState('');
   const [showMenu, setShowMenu] = useState(false);
   const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);

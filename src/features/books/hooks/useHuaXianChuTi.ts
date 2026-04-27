@@ -180,7 +180,7 @@ export function useHuaXianChuTi({
     if (qingChuJiu) {
       rendition.annotations.remove('highlight');
     }
-    const se = YAN_SE_PEI_ZHI[yanSe];
+    const _se = YAN_SE_PEI_ZHI[yanSe];
     const cls = HL_CLASS_MAP[yanSe];
     const svgStyle = { fill: se, 'fill-opacity': '0', stroke: se, 'stroke-width': '0', 'stroke-dasharray': 'none' };
     try {
@@ -413,7 +413,7 @@ export function useHuaXianChuTi({
     if (annotation) {
       const rendition = renditionRef?.current;
       if (rendition && target.cfiRange) {
-        const se = YAN_SE_PEI_ZHI[yanSe];
+        const _se = YAN_SE_PEI_ZHI[yanSe];
         const cls = HL_CLASS_MAP[yanSe];
         const span = rendition.getContents()?.[0]?.window?.document?.querySelector(`[data-huaxian-id="${id}"]`);
         if (span) {

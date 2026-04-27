@@ -15,7 +15,7 @@ const CHA_ZHAO_STORAGE_KEY = 'chazhao_state';
 
 function loadSavedState(): { input: string; results: SearchResult[]; searched: boolean; dangQianSuoYin: number } | null {
   try {
-    const saved = localStorage.getItem(CHA_ZHAO_STORAGE_KEY);
+    const _saved = localStorage.getItem(CHA_ZHAO_STORAGE_KEY);
     if (saved) {
       return JSON.parse(saved);
     }

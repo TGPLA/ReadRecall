@@ -1,7 +1,7 @@
 // @审计已完成
 // Toast 工具函数 - 统一的消息提示
 
-import { showToast, type ToastType } from './ToastRongQi';
+import { showToast } from './ToastRongQi';
 
 export function showSuccess(message: string) {
   showToast('success', message);

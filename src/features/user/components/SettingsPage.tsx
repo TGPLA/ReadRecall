@@ -29,7 +29,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
     formDataRef.current = formData;
   }, [formData]);
 
-  const [saved, setSaved] = useState(false);
+  const [_saved, setSaved] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [version, setVersion] = useState('加载中...');
   const [showPasswordModal, setShowPasswordModal] = useState(false);

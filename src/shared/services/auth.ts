@@ -212,7 +212,7 @@ class AuthService {
     return { error: null };
   }
 
-  async resetPassword(username: string): Promise<{ error: AuthError | null }> {
+  async resetPassword(_username: string): Promise<{ error: AuthError | null }> {
     return { error: { message: '暂不支持密码重置功能' } };
   }
 

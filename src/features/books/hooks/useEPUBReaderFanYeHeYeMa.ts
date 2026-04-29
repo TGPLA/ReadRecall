@@ -61,104 +61,17 @@ export function useEPUBReaderFanYeHeYeMa({
       return;
     }
     
-    console.log('[调试] handleNextPage: rendition 存在，开始处理翻页');
-    const currentLocation = rendition.location;
-    console.log('[调试] handleNextPage: 当前位置', currentLocation);
-    
-    if (!currentLocation) {
-      console.log('[调试] handleNextPage: currentLocation 不存在，使用 rendition.next()');
-      rendition.next().then(() => {
-        console.log('[调试] handleNextPage: 下一页成功');
-        const currentHref = rendition.location?.start?.href || '';
-        if (currentHref && saveImmediately) {
-          saveImmediately(currentHref);
-        }
-      }).catch((error) => { 
-        console.error('[调试] handleNextPage: 下一页出错:', error); 
-      });
-      return;
-    }
-    
-    const currentDisplayed = currentLocation?.start?.displayed;
-    console.log('[调试] handleNextPage: 当前页码信息', currentDisplayed);
-    
-    const currentPage = currentDisplayed?.page;
-    const currentHref = currentLocation?.start?.href;
-    
-    console.log('[调试] handleNextPage: 当前页码', currentPage, 'href', currentHref);
-    
-    if (currentPage === 1) {
-      console.log('[调试] handleNextPage: 是章节第一页，直接跳转到下一章节');
-      try {
-        const book = (rendition as any).book;
-        const spine = book?.spine;
-        if (spine && currentLocation?.start?.index !== undefined) {
-          const nextIndex = currentLocation.start.index + 1;
-          const nextSection = spine.get(nextIndex);
-          console.log('[调试] handleNextPage: 下一章节索引', nextIndex, '章节信息', nextSection);
-          console.log('[调试] handleNextPage: nextSection.href=', nextSection?.href);
-          console.log('[调试] handleNextPage: nextSection.href 属性', nextSection ? nextSection.href : 'undefined');
-          
-          if (nextSection && nextSection.href) {
-            const targetHref = nextSection.href;
-            console.log('[调试] handleNextPage: 跳转到下一章节', targetHref);
-            
-            rendition.display(targetHref).then(() => {
-              console.log('[调试] handleNextPage: 跳转到下一章节成功，准备强制刷新');
-              console.log('[调试] handleNextPage: 刷新前 rendition.location', rendition.location);
-              console.log('[调试] handleNextPage: 刷新前 location.start.href', rendition.location?.start?.href);
-              
-              const contents = rendition.getContents();
-              console.log('[调试] handleNextPage: contents 数量', contents ? contents.length : 0);
-              
-              setTimeout(() => {
-                console.log('[调试] handleNextPage: setTimeout 延迟刷新');
-                rendition.resize();
-                const views = rendition.views();
-                console.log('[调试] handleNextPage: views 数量', views ? views.length : 0);
-                
-                const newLocation = rendition.location;
-                console.log('[调试] handleNextPage: 刷新后 location', newLocation);
-                console.log('[调试] handleNextPage: 刷新后 location.href', newLocation?.start?.href);
-                
-                if (contents && contents.length > 0) {
-                  const content = contents[0];
-                  console.log('[调试] handleNextPage: content iframe', content?.iframe);
-                  if (content?.iframe && content.iframe.contentWindow) {
-                    const iframeWindow = content.iframe.contentWindow;
-                    console.log('[调试] handleNextPage: iframe 加载的文档', iframeWindow?.document?.URL);
-                  }
-                }
-                
-                gengXinYeMaXinXi();
-                const currentHref = rendition.location?.start?.href || '';
-                if (currentHref && saveImmediately) {
-                  saveImmediately(currentHref);
-                }
-              }, 50);
-            }).catch((err) => {
-              console.error('[调试] handleNextPage: 跳转到下一章节失败', err);
-            });
-          } else {
-            console.log('[调试] handleNextPage: 已经是最后一章了');
-          }
-        }
-      } catch (e) {
-        console.error('[调试] handleNextPage: 尝试跳转到下一章节出错', e);
+    console.log('[调试] handleNextPage: rendition 存在，调用 rendition.next() 翻页');
+    rendition.next().then(() => {
+      console.log('[调试] handleNextPage: 翻页成功');
+      gengXinYeMaXinXi();
+      const currentHref = rendition.location?.start?.href || '';
+      if (currentHref && saveImmediately) {
+        saveImmediately(currentHref);
       }
-    } else {
-      console.log('[调试] handleNextPage: 不是第一页，正常翻页');
-      rendition.next().then(() => {
-        console.log('[调试] handleNextPage: 翻页成功');
-        gengXinYeMaXinXi();
-        const currentHref = rendition.location?.start?.href || '';
-        if (currentHref && saveImmediately) {
-          saveImmediately(currentHref);
-        }
-      }).catch((error) => { 
-        console.error('[调试] handleNextPage: 下一页出错:', error); 
-      });
-    }
+    }).catch((error) => { 
+      console.error('[调试] handleNextPage: 下一页出错:', error); 
+    });
   }, [gengXinYeMaXinXi, saveImmediately]);
 
   const handlePrevPage = useCallback(() => {

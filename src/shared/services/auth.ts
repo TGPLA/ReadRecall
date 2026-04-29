@@ -95,7 +95,7 @@ class AuthService {
       const response = await fetch(`${API_BASE}/auth/signin`, {
         method: 'POST',
         headers: headers,
-        body: JSON.stringify({ _username, password }),
+        body: JSON.stringify({ username, password }),
       });
 
       const text = await response.text();
@@ -125,7 +125,7 @@ class AuthService {
 
       const user: AuthUser = {
         id: String(data.data.user.id),
-        username: data.data.user._username,
+        username: data.data.user.username,
         nickname: data.data.user.nickname,
       };
 
@@ -169,7 +169,7 @@ class AuthService {
       const response = await fetch(`${API_BASE}/auth/signup`, {
         method: 'POST',
         headers: headers,
-        body: JSON.stringify({ _username, password, nickname }),
+        body: JSON.stringify({ username, password, nickname }),
       });
 
       const data = await response.json();
@@ -183,7 +183,7 @@ class AuthService {
 
       const user: AuthUser = {
         id: String(data.data.user.id),
-        username: data.data.user._username,
+        username: data.data.user.username,
         nickname: data.data.user.nickname,
       };
 

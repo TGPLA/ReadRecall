@@ -14,58 +14,63 @@ export function YueDuQiDiBuFanYe({ onShangYiYe, onXiaYiYe, keJian }: YueDuQiDiBu
   if (!keJian) return null;
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '0.5rem 1.5rem 0.75rem',
-    }}>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          console.log('[翻页按钮] 上一页 clicked');
-          onShangYiYe();
-        }}
-        style={{
-          padding: '0.4rem 0.8rem',
-          border: 'none',
-          borderRadius: '4px',
-          backgroundColor: 'transparent',
-          color: 'var(--ci-yao-wen-zi)',
-          cursor: 'pointer',
-          fontSize: '0.85rem',
-          opacity: 0.6,
-          transition: 'opacity 0.2s ease',
-          userSelect: 'none' as const,
-        }}
-        onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.opacity = '1'}
-        onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.opacity = '0.6'}
-      >
-        （上一页）
-      </button>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          console.log('[翻页按钮] 下一页 clicked');
-          onXiaYiYe();
-        }}
-        style={{
-          padding: '0.4rem 0.8rem',
-          border: 'none',
-          borderRadius: '4px',
-          backgroundColor: 'transparent',
-          color: 'var(--ci-yao-wen-zi)',
-          cursor: 'pointer',
-          fontSize: '0.85rem',
-          opacity: 0.6,
-          transition: 'opacity 0.2s ease',
-          userSelect: 'none' as const,
-        }}
-        onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.opacity = '1'}
-        onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.opacity = '0.6'}
-      >
-        （下一页）
-      </button>
-    </div>
+    <>
+      <style>{`
+        .di-bu-fan-ye-an-niu:hover {
+          opacity: 1 !important;
+        }
+      `}</style>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0.5rem 1.5rem 0.75rem',
+      }}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('[翻页按钮] 上一页 clicked');
+            onShangYiYe();
+          }}
+          style={{
+            padding: '0.4rem 0.8rem',
+            border: 'none',
+            borderRadius: '4px',
+            backgroundColor: 'transparent',
+            color: 'var(--ci-yao-wen-zi)',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            opacity: 0.6,
+            transition: 'opacity 0.15s ease',
+            userSelect: 'none' as const,
+          }}
+          className="di-bu-fan-ye-an-niu"
+        >
+          （上一页）
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('[翻页按钮] 下一页 clicked');
+            onXiaYiYe();
+          }}
+          style={{
+            padding: '0.4rem 0.8rem',
+            border: 'none',
+            borderRadius: '4px',
+            backgroundColor: 'transparent',
+            color: 'var(--ci-yao-wen-zi)',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            opacity: 0.6,
+            transition: 'opacity 0.15s ease',
+            userSelect: 'none' as const,
+          }}
+          className="di-bu-fan-ye-an-niu"
+        >
+          （下一页）
+        </button>
+      </div>
+    </>
   );
 }

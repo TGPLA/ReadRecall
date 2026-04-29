@@ -138,15 +138,18 @@ export function EPUBYueDuQuYu({
   const anNiuYangShi: React.CSSProperties = {
     padding: '6px 14px', border: 'none', borderRadius: '6px',
     backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--ci-yao-wen-zi)',
-    cursor: 'pointer', fontSize: '13px', opacity: 0.7, transition: 'all 0.2s ease',
+    cursor: 'pointer', fontSize: '13px', opacity: 0.7, transition: 'all 0.15s ease',
     userSelect: 'none' as const, fontFamily: 'inherit',
   };
 
-  const anNiuOnMouseEnter = (e: React.MouseEvent) => (e.currentTarget as HTMLElement).style.opacity = '1';
-  const anNiuOnMouseLeave = (e: React.MouseEvent) => (e.currentTarget as HTMLElement).style.opacity = '0.7';
-
   return (
-    <div style={BAO_CHI_QI_YANG_SHI} ref={rongQiRef}>
+    <>
+      <style>{`
+        .fan-ye-an-niu:hover {
+          opacity: 1 !important;
+        }
+      `}</style>
+      <div style={BAO_CHI_QI_YANG_SHI} ref={rongQiRef}>
       <QingChuKuNeiBuBianJu containerRef={rongQiRef} />
       <div style={KA_PIAN_YANG_SHI}>
         <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
@@ -249,25 +252,37 @@ export function EPUBYueDuQuYu({
         {keJian && (onShangYiYe || onXiaYiYe) && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', flexShrink: 0 }}>
             {onShangYiYe && (
-              <button onClick={(e) => { 
-                console.log('[调试] 上一页按钮被点击'); 
-                e.stopPropagation(); 
-                onShangYiYe(); 
-              }} style={anNiuYangShi}
-                onMouseEnter={anNiuOnMouseEnter}
-                onMouseLeave={anNiuOnMouseLeave}>
+              <button 
+                onClick={(e) => { 
+                  console.log('[调试] 上一页按钮被点击'); 
+                  e.stopPropagation(); 
+                  try {
+                    onShangYiYe(); 
+                  } catch (err) {
+                    console.error('[翻页] 执行失败:', err);
+                  }
+                }} 
+                style={anNiuYangShi}
+                className="fan-ye-an-niu"
+              >
                 ← 上一页
               </button>
             )}
             <div />
             {onXiaYiYe && (
-              <button onClick={(e) => { 
-                console.log('[调试] 下一页按钮被点击'); 
-                e.stopPropagation(); 
-                onXiaYiYe(); 
-              }} style={anNiuYangShi}
-                onMouseEnter={anNiuOnMouseEnter}
-                onMouseLeave={anNiuOnMouseLeave}>
+              <button 
+                onClick={(e) => { 
+                  console.log('[调试] 下一页按钮被点击'); 
+                  e.stopPropagation(); 
+                  try {
+                    onXiaYiYe(); 
+                  } catch (err) {
+                    console.error('[翻页] 执行失败:', err);
+                  }
+                }} 
+                style={anNiuYangShi}
+                className="fan-ye-an-niu"
+              >
                 下一页 →
               </button>
             )}
@@ -275,5 +290,6 @@ export function EPUBYueDuQuYu({
         )}
       </div>
     </div>
+    </>
   );
 }
